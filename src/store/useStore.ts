@@ -59,6 +59,7 @@ interface AppState {
   banners: Banner[];
   paymentMethods: PaymentMethod[];
   reviews: Review[];
+  wishlist: string[];
   siteName: string;
   siteLogo: string;
   isInitialized: boolean;
@@ -67,6 +68,9 @@ interface AppState {
   initFirebase: () => void;
   setUser: (user: User | null) => void;
   
+  // Wishlist functions
+  toggleWishlist: (productId: string) => Promise<void>;
+
   // Settings functions
   updateSettings: (data: { siteName?: string; siteLogo?: string; whatsappNumber?: string }) => Promise<void>;
 
@@ -116,11 +120,33 @@ export const useStore = create<AppState>((set, get) => ({
   banners: [],
   paymentMethods: [],
   reviews: [],
+  wishlist: JSON.parse(localStorage.getItem('wishlist') || '[]'),
   siteName: 'KeyMaster',
   siteLogo: '',
   isInitialized: false,
 
   setUser: (user) => set({ user }),
+
+  toggleWishlist: async (productId) => {
+    const { user, wishlist } = get();
+    const isWishlisted = wishlist.includes(productId);
+    const newWishlist = isWishlisted 
+      ? wishlist.filter(id => id !== productId)
+      : [...wishlist, productId];
+    
+    set({ wishlist: newWishlist });
+    localStorage.setItem('wishlist', JSON.stringify(newWishlist));
+    
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'users', user.id), {
+          wishlist: newWishlist
+        });
+      } catch (error) {
+        console.error('Error updating wishlist in Firestore:', error);
+      }
+    }
+  },
 
   updateSettings: async (data) => {
     try {
@@ -137,15 +163,26 @@ export const useStore = create<AppState>((set, get) => ({
     // Listen to Auth
     onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        const userData = userDoc.data();
-        set({ 
-          user: { 
-            id: firebaseUser.uid, 
-            name: userData?.name || firebaseUser.email?.split('@')[0] || 'User', 
-            email: firebaseUser.email || '', 
-            role: userData?.role || 'user'
-          } 
+        // Real-time listener for user document
+        onSnapshot(doc(db, 'users', firebaseUser.uid), (snapshot) => {
+          if (snapshot.exists()) {
+            const userData = snapshot.data();
+            
+            // Sync wishlist from Firestore if it exists
+            if (userData?.wishlist) {
+              set({ wishlist: userData.wishlist });
+              localStorage.setItem('wishlist', JSON.stringify(userData.wishlist));
+            }
+
+            set({ 
+              user: { 
+                id: firebaseUser.uid, 
+                name: userData?.name || firebaseUser.email?.split('@')[0] || 'User', 
+                email: firebaseUser.email || '', 
+                role: userData?.role || 'user'
+              } 
+            });
+          }
         });
       } else {
         set({ user: null });

@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Store from './pages/Store';
 import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/Cart';
+import Wishlist from './pages/Wishlist';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="store" element={<Store />} />
           <Route path="product/:id" element={<ProductDetails />} />
           <Route path="cart" element={<Cart />} />
+          <Route path="wishlist" element={<Wishlist />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="dashboard/orders" element={<Dashboard />} />
           <Route path="login" element={<Login />} />

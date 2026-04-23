@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router';
 import { useStore } from '../../store/useStore';
 import { 
-  ShoppingCart, Menu, UserCircle, Search, Key, LayoutDashboard, ShieldCheck, X, Globe
+  ShoppingCart, Menu, UserCircle, Search, Key, LayoutDashboard, ShieldCheck, X, Globe, Heart
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '../../lib/utils';
@@ -10,9 +10,10 @@ import WhatsAppWidget from '../WhatsAppWidget';
 import { useTranslation } from 'react-i18next';
 
 export default function MainLayout() {
-  const { cart, user, logout, siteName, siteLogo } = useStore();
+  const { cart, user, logout, siteName, siteLogo, wishlist } = useStore();
   const { t, i18n } = useTranslation();
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const wishlistCount = wishlist.length;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -89,6 +90,16 @@ export default function MainLayout() {
                  <Globe className="w-5 h-5" />
                  <span className="hidden sm:inline">{i18n.language === 'ar' ? 'EN' : 'عربي'}</span>
               </button>
+              
+              <Link to="/wishlist" className="relative text-slate-600 hover:text-red-500 transition-colors flex items-center p-2 rounded-full hover:bg-slate-100">
+                <Heart className={cn("w-5 h-5 sm:w-6 sm:h-6", wishlistCount > 0 && "fill-red-500 text-red-500")} />
+                {wishlistCount > 0 && (
+                  <span className="absolute top-0 right-0 sm:right-0.5 inline-flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 text-[10px] sm:text-xs font-bold leading-none text-white transform bg-red-500 rounded-full border-2 border-white shadow-sm">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+
               <Link to="/cart" className="relative text-slate-600 hover:text-indigo-600 transition-colors flex items-center p-2 rounded-full hover:bg-slate-100">
                 <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                 {cartItemsCount > 0 && (
@@ -156,6 +167,20 @@ export default function MainLayout() {
                     {link.name}
                   </Link>
                 ))}
+
+                <Link
+                  to="/wishlist"
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold transition-colors",
+                    location.pathname === '/wishlist' ? "bg-red-50 text-red-700" : "text-slate-700 hover:bg-slate-50"
+                  )}
+                >
+                  <Heart className={cn("w-5 h-5", wishlistCount > 0 && "fill-red-500 text-red-500")} />
+                  <span>{t('wishlist.title') || 'Wishlist'}</span>
+                  {wishlistCount > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{wishlistCount}</span>
+                  )}
+                </Link>
                 
                 <div className="h-px bg-slate-100 my-4 mx-2"></div>
                 

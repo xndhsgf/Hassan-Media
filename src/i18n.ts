@@ -16,9 +16,18 @@ const resources = {
         dashboard: "Dashboard",
         signOut: "Sign Out",
         cart: "Shopping Cart",
-        adminLogin: "Admin Panel"
+        adminLogin: "Admin Panel",
+        wishlist: "Wishlist"
       },
       currency: "EGP",
+      wishlist: {
+        title: "Your Wishlist",
+        itemsFound: "items found in your wishlist",
+        continueShopping: "Continue Shopping",
+        emptyTitle: "Your wishlist is empty",
+        emptyDesc: "Explore our collection and add products you love to your wishlist!",
+        browseStore: "Browse Store"
+      },
       home: {
         dailyDiscounts: "Daily Discounts",
         discover: "Discover our best-selling digital products",
@@ -168,7 +177,17 @@ const resources = {
         dashboard: "لوحة التحكم",
         signOut: "تسجيل الخروج",
         cart: "سلة التسوق",
-        adminLogin: "لوحة الإدارة"
+        adminLogin: "لوحة الإدارة",
+        wishlist: "المفضلة"
+      },
+      currency: "EGP",
+      wishlist: {
+        title: "قائمة أمنياتك",
+        itemsFound: "منتجات تم العثور عليها في مفضلتك",
+        continueShopping: "متابعة التسوق",
+        emptyTitle: "قائمة المفضلة فارغة",
+        emptyDesc: "استكشف مجموعتنا وأضف المنتجات التي تحبها إلى مفضلتك!",
+        browseStore: "تصفح المتجر"
       },
       home: {
         dailyDiscounts: "خصومات يومية",

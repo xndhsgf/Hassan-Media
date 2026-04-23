@@ -11,7 +11,8 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { t } = useTranslation();
-  const { addToCart } = useStore();
+  const { addToCart, wishlist, toggleWishlist } = useStore();
+  const isWishlisted = wishlist.includes(product.id);
 
   const discountedPrice = product.discountPercentage 
     ? product.price * (1 - product.discountPercentage / 100)
@@ -35,15 +36,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           
           {/* Action Buttons Overlay - Centered at bottom */}
           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center justify-center w-full px-4">
-            <div className="bg-white rounded-full p-1.5 flex items-center gap-1 shadow-xl border border-slate-100/50 opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 transition-all duration-500 ease-out">
+            <div className="bg-white rounded-full p-1.5 flex items-center gap-1 shadow-xl border border-slate-100/50 opacity-0 group-hover:opacity-100 group-active:opacity-100 translate-y-3 group-hover:translate-y-0 group-active:translate-y-0 transition-all duration-500 ease-out z-20">
               <button 
-                className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-50 transition-colors text-slate-700 active:scale-90"
+                className={`w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-50 transition-colors active:scale-90 ${isWishlisted ? 'text-red-500' : 'text-slate-700'}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  // Add to wishlist logic could go here
+                  toggleWishlist(product.id);
                 }}
               >
-                <Heart className="w-5 h-5" />
+                <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
               </button>
               <div className="w-[1px] h-6 bg-slate-100 mx-0.5"></div>
               <button 
