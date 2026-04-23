@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router';
 import { 
   LayoutDashboard, ShoppingBag, Users, Key, Settings,
-  LogOut, Home, BarChart3, Tag, Menu, X, Image
+  LogOut, Home, BarChart3, Tag, Menu, X, Image, Megaphone
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useStore } from '../../store/useStore';
@@ -21,6 +21,7 @@ export default function AdminLayout() {
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
     { name: 'Products', path: '/admin/products', icon: ShoppingBag },
     { name: 'Orders', path: '/admin/orders', icon: BarChart3 },
+    { name: 'Announcements', path: '/admin/announcements', icon: Megaphone },
     { name: 'Payment Methods', path: '/admin/payment-methods', icon: Key },
     { name: 'Banners', path: '/admin/banners', icon: Image },
     { name: 'Users', path: '/admin/users', icon: Users },

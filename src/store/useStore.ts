@@ -50,6 +50,12 @@ export interface Banner {
   isActive: boolean;
 }
 
+export interface Announcement {
+  id: string;
+  text: string;
+  isActive: boolean;
+}
+
 interface AppState {
   products: Product[];
   cart: CartItem[];
@@ -57,6 +63,7 @@ interface AppState {
   allOrders: Order[];
   whatsappNumber: string;
   banners: Banner[];
+  announcements: Announcement[];
   paymentMethods: PaymentMethod[];
   reviews: Review[];
   wishlist: string[];
@@ -95,6 +102,12 @@ interface AppState {
   deleteBanner: (id: string) => Promise<void>;
   toggleBannerStatus: (id: string) => Promise<void>;
 
+  // Announcement functions
+  addAnnouncement: (text: string) => Promise<void>;
+  updateAnnouncement: (id: string, data: Partial<Announcement>) => Promise<void>;
+  deleteAnnouncement: (id: string) => Promise<void>;
+  toggleAnnouncementStatus: (id: string) => Promise<void>;
+
   // Payment Methods functions
   addPaymentMethod: (method: Omit<PaymentMethod, 'id'>) => Promise<void>;
   updatePaymentMethod: (id: string, data: Partial<PaymentMethod>) => Promise<void>;
@@ -118,6 +131,7 @@ export const useStore = create<AppState>((set, get) => ({
   allOrders: [],
   whatsappNumber: '+1234567890',
   banners: [],
+  announcements: [],
   paymentMethods: [],
   reviews: [],
   wishlist: JSON.parse(localStorage.getItem('wishlist') || '[]'),
@@ -199,6 +213,12 @@ export const useStore = create<AppState>((set, get) => ({
     onSnapshot(collection(db, 'banners'), (snapshot) => {
       const banners = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Banner));
       set({ banners });
+    });
+
+    // Listen to Announcements
+    onSnapshot(collection(db, 'announcements'), (snapshot) => {
+      const announcements = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Announcement));
+      set({ announcements });
     });
 
     // Listen to Payment Methods
@@ -357,6 +377,25 @@ export const useStore = create<AppState>((set, get) => ({
     const banner = get().banners.find(b => b.id === id);
     if (banner) {
       await updateDoc(doc(db, 'banners', id), { isActive: !banner.isActive });
+    }
+  },
+
+  addAnnouncement: async (text) => {
+    await addDoc(collection(db, 'announcements'), { text, isActive: true });
+  },
+
+  updateAnnouncement: async (id, data) => {
+    await updateDoc(doc(db, 'announcements', id), data);
+  },
+
+  deleteAnnouncement: async (id) => {
+    await deleteDoc(doc(db, 'announcements', id));
+  },
+
+  toggleAnnouncementStatus: async (id) => {
+    const announcement = get().announcements.find(a => a.id === id);
+    if (announcement) {
+      await updateDoc(doc(db, 'announcements', id), { isActive: !announcement.isActive });
     }
   },
   

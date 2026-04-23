@@ -12,6 +12,7 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminBanners from './pages/admin/AdminBanners';
 import AdminPaymentMethods from './pages/admin/AdminPaymentMethods';
+import AdminAnnouncements from './pages/admin/AdminAnnouncements';
 import AdminSettings from './pages/admin/AdminSettings';
 import Login from './pages/Login';
 import { useEffect } from 'react';
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="orders" element={<AdminOrders />} />
           <Route path="banners" element={<AdminBanners />} />
           <Route path="payment-methods" element={<AdminPaymentMethods />} />
+          <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="*" element={<div className="p-8"><h2 className="text-xl font-bold">Coming Soon</h2><p className="text-slate-500 mt-2">This section of the admin panel is under construction.</p></div>} />
         </Route>

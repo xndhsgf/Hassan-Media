@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import ProductCard from '../components/ProductCard';
+import AnnouncementBar from '../components/AnnouncementBar';
 
 export default function Home() {
   const { products, banners, paymentMethods } = useStore();
@@ -57,6 +58,9 @@ export default function Home() {
         
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent z-10 pointer-events-none"></div>
       </section>
+
+      {/* Announcement Ticker */}
+      <AnnouncementBar />
 
       {/* Featured Products */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
