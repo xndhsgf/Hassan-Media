@@ -1,6 +1,17 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { mockProducts, mockBanners, mockPaymentMethods, Product, ProductType, PaymentMethod, Review, ProductDurationOption } from '../data/mockData';
+import { Product, ProductType, PaymentMethod, Review, ProductDurationOption } from '../data/mockData';
+import { db, auth } from '../lib/firebase';
+import { 
+  collection, doc, setDoc, getDocs, onSnapshot, 
+  updateDoc, deleteDoc, query, orderBy, 
+  addDoc, serverTimestamp, getDoc 
+} from 'firebase/firestore';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from 'firebase/auth';
 
 export interface CartItem {
   product: Product;
@@ -96,210 +107,243 @@ const generateMockDelivery = (type: ProductType) => {
   return `Sub ID: SUB-${Math.random().toString(36).slice(-10).toUpperCase()}`;
 };
 
-export const useStore = create<AppState>()(
-  persist(
-    (set, get) => ({
-      products: mockProducts,
-      cart: [],
-      user: null,
-      allOrders: [],
-      whatsappNumber: '+1234567890',
-      banners: mockBanners,
-      paymentMethods: mockPaymentMethods,
-      reviews: [],
-      siteName: 'KeyMaster',
-      siteLogo: '',
-      isInitialized: false,
+export const useStore = create<AppState>((set, get) => ({
+  products: [],
+  cart: [],
+  user: null,
+  allOrders: [],
+  whatsappNumber: '+1234567890',
+  banners: [],
+  paymentMethods: [],
+  reviews: [],
+  siteName: 'KeyMaster',
+  siteLogo: '',
+  isInitialized: false,
 
-      setUser: (user) => set({ user }),
+  setUser: (user) => set({ user }),
 
-      updateSettings: async (data) => {
-        set((state) => ({ ...state, ...data }));
-      },
-
-      initFirebase: () => {
-        const { isInitialized, products, banners, paymentMethods } = get();
-        if (isInitialized) return;
-
-        // If persisted state is completely empty for some reason, rehydrate from mockData
-        set({ 
-          isInitialized: true,
-          products: products.length > 0 ? products : mockProducts,
-          paymentMethods: paymentMethods.length > 0 ? paymentMethods : mockPaymentMethods,
-          banners: banners.length > 0 ? banners : mockBanners
-        });
-      },
-
-      addToCart: (product, selectedDuration) => set((state) => {
-        const existing = state.cart.find(item => 
-          item.product.id === product.id && 
-          item.selectedDuration?.id === selectedDuration?.id
-        );
-        if (existing) {
-          return { 
-            cart: state.cart.map(item => 
-              (item.product.id === product.id && item.selectedDuration?.id === selectedDuration?.id) 
-                ? { ...item, quantity: item.quantity + 1 } 
-                : item
-            ) 
-          };
-        }
-        return { cart: [...state.cart, { product, quantity: 1, selectedDuration }] };
-      }),
-      
-      removeFromCart: (productId, durationId) => set((state) => ({
-        cart: state.cart.filter(item => !(item.product.id === productId && item.selectedDuration?.id === durationId))
-      })),
-      
-      clearCart: () => set({ cart: [] }),
-      
-      login: async (email, pass) => {
-        const role: 'user' | 'admin' = email.includes('admin') ? 'admin' : 'user';
-        set({ 
-          user: { 
-            id: `mock-${Date.now()}`, 
-            name: email.split('@')[0], 
-            email, 
-            role: role
-          } 
-        });
-      },
-
-      register: async (email, pass) => {
-        const role: 'user' | 'admin' = email.includes('admin') ? 'admin' : 'user';
-        set({ 
-          user: { 
-            id: `mock-${Date.now()}`, 
-            name: email.split('@')[0], 
-            email, 
-            role: role
-          } 
-        });
-      },
-      
-      logout: async () => {
-        set({ user: null });
-      },
-      
-      placeOrder: async (method) => {
-        const { cart, user, allOrders } = get();
-        if (!user || cart.length === 0) return;
-
-        const total = cart.reduce((sum, item) => {
-          const basePrice = item.selectedDuration ? item.selectedDuration.price : item.product.price;
-          const finalPrice = item.product.discountPercentage 
-            ? basePrice * (1 - item.product.discountPercentage / 100)
-            : basePrice;
-          return sum + (finalPrice * item.quantity);
-        }, 0);
-        
-        const keys = method === 'Auto' ? cart.map(item => ({
-          productId: item.product.id,
-          productName: item.product.name,
-          type: item.product.type,
-          value: generateMockDelivery(item.product.type)
-        })) : [];
-
-        const newOrder: Order = {
-          id: `ORD-${Date.now().toString().slice(-6)}`,
-          date: new Date().toISOString(),
-          userId: user.id,
-          userEmail: user.email,
-          items: [...cart],
-          total,
-          status: method === 'WhatsApp' ? 'Pending' : 'Completed',
-          method,
-          keys
-        };
-
-        set({ 
-          allOrders: [newOrder, ...allOrders],
-          cart: []
-        });
-      },
-
-      addProduct: async (product) => {
-        set((state) => ({ products: [...state.products, product] }));
-      },
-
-      updateProduct: async (id, data) => {
-        set((state) => ({
-          products: state.products.map(p => p.id === id ? { ...p, ...data } : p)
-        }));
-      },
-
-      deleteProduct: async (id) => {
-        set((state) => ({
-          products: state.products.filter(p => p.id !== id)
-        }));
-      },
-
-      updateOrderStatus: async (orderId, status) => {
-        set((state) => ({
-          allOrders: state.allOrders.map(o => o.id === orderId ? { ...o, status } : o)
-        }));
-      },
-
-      updateWhatsAppNumber: async (num) => {
-        set({ whatsappNumber: num });
-      },
-      
-      addBanner: async (banner) => {
-        set((state) => ({ 
-          banners: [...state.banners, { ...banner, id: `ban-${Date.now()}` }] 
-        }));
-      },
-      
-      updateBanner: async (id, data) => {
-        set((state) => ({
-          banners: state.banners.map(b => b.id === id ? { ...b, ...data } : b)
-        }));
-      },
-      
-      deleteBanner: async (id) => {
-        set((state) => ({
-          banners: state.banners.filter(b => b.id !== id)
-        }));
-      },
-      
-      toggleBannerStatus: async (id) => {
-        set((state) => ({
-          banners: state.banners.map(b => b.id === id ? { ...b, isActive: !b.isActive } : b)
-        }));
-      },
-      
-      addPaymentMethod: async (method) => {
-        set((state) => ({ 
-          paymentMethods: [...state.paymentMethods, { ...method, id: `pm-${Date.now()}` }] 
-        }));
-      },
-      
-      updatePaymentMethod: async (id, data) => {
-        set((state) => ({
-          paymentMethods: state.paymentMethods.map(p => p.id === id ? { ...p, ...data } : p)
-        }));
-      },
-      
-      deletePaymentMethod: async (id) => {
-        set((state) => ({
-          paymentMethods: state.paymentMethods.filter(p => p.id !== id)
-        }));
-      },
-
-      addReview: async (review) => {
-        set((state) => ({ 
-          reviews: [{ ...review, id: `rev-${Date.now()}`, date: new Date().toISOString() }, ...state.reviews] 
-        }));
-      },
-      
-      deleteReview: async (id) => {
-        set((state) => ({
-          reviews: state.reviews.filter(r => r.id !== id)
-        }));
-      }
-    }),
-    {
-      name: 'keymaster-storage', // name of the item in the storage (must be unique)
+  updateSettings: async (data) => {
+    try {
+      await setDoc(doc(db, 'settings', 'general'), data, { merge: true });
+    } catch (error) {
+      console.error('Error updating settings:', error);
     }
-  )
-);
+  },
+
+  initFirebase: () => {
+    const { isInitialized } = get();
+    if (isInitialized) return;
+
+    // Listen to Auth
+    onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+        const userData = userDoc.data();
+        set({ 
+          user: { 
+            id: firebaseUser.uid, 
+            name: userData?.name || firebaseUser.email?.split('@')[0] || 'User', 
+            email: firebaseUser.email || '', 
+            role: userData?.role || 'user'
+          } 
+        });
+      } else {
+        set({ user: null });
+      }
+    });
+
+    // Listen to Products
+    onSnapshot(collection(db, 'products'), (snapshot) => {
+      const products = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Product));
+      set({ products });
+    });
+
+    // Listen to Banners
+    onSnapshot(collection(db, 'banners'), (snapshot) => {
+      const banners = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Banner));
+      set({ banners });
+    });
+
+    // Listen to Payment Methods
+    onSnapshot(collection(db, 'paymentMethods'), (snapshot) => {
+      const paymentMethods = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PaymentMethod));
+      set({ paymentMethods });
+    });
+
+    // Listen to Orders
+    onSnapshot(query(collection(db, 'orders'), orderBy('date', 'desc')), (snapshot) => {
+      const allOrders = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Order));
+      set({ allOrders });
+    });
+
+    // Listen to Reviews
+    onSnapshot(query(collection(db, 'reviews'), orderBy('date', 'desc')), (snapshot) => {
+      const reviews = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Review));
+      set({ reviews });
+    });
+
+    // Listen to Settings
+    onSnapshot(doc(db, 'settings', 'general'), (doc) => {
+      if (doc.exists()) {
+        const data = doc.data();
+        set({ 
+          siteName: data.siteName || 'KeyMaster', 
+          siteLogo: data.siteLogo || '', 
+          whatsappNumber: data.whatsappNumber || '+1234567890' 
+        });
+      }
+    });
+
+    set({ isInitialized: true });
+  },
+
+  addToCart: (product, selectedDuration) => set((state) => {
+    const existing = state.cart.find(item => 
+      item.product.id === product.id && 
+      item.selectedDuration?.id === selectedDuration?.id
+    );
+    if (existing) {
+      return { 
+        cart: state.cart.map(item => 
+          (item.product.id === product.id && item.selectedDuration?.id === selectedDuration?.id) 
+            ? { ...item, quantity: item.quantity + 1 } 
+            : item
+        ) 
+      };
+    }
+    return { cart: [...state.cart, { product, quantity: 1, selectedDuration }] };
+  }),
+  
+  removeFromCart: (productId, durationId) => set((state) => ({
+    cart: state.cart.filter(item => !(item.product.id === productId && item.selectedDuration?.id === durationId))
+  })),
+  
+  clearCart: () => set({ cart: [] }),
+  
+  login: async (email, pass) => {
+    await signInWithEmailAndPassword(auth, email, pass);
+  },
+
+  register: async (email, pass) => {
+    const res = await createUserWithEmailAndPassword(auth, email, pass);
+    // Create user profile in firestore
+    await setDoc(doc(db, 'users', res.user.uid), {
+      name: email.split('@')[0],
+      email,
+      role: 'user',
+      createdAt: serverTimestamp()
+    });
+  },
+  
+  logout: async () => {
+    await signOut(auth);
+  },
+  
+  placeOrder: async (method) => {
+    const { cart, user } = get();
+    if (!user || cart.length === 0) return;
+
+    const total = cart.reduce((sum, item) => {
+      const basePrice = item.selectedDuration ? item.selectedDuration.price : item.product.price;
+      const finalPrice = item.product.discountPercentage 
+        ? basePrice * (1 - item.product.discountPercentage / 100)
+        : basePrice;
+      return sum + (finalPrice * item.quantity);
+    }, 0);
+    
+    const keys = method === 'Auto' ? cart.map(item => ({
+      productId: item.product.id,
+      productName: item.product.name,
+      type: item.product.type,
+      value: generateMockDelivery(item.product.type)
+    })) : [];
+
+    const newOrder = {
+      date: new Date().toISOString(),
+      userId: user.id,
+      userEmail: user.email,
+      items: cart.map(item => ({
+        product: {
+          id: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
+          priceEGP: item.product.priceEGP,
+          type: item.product.type,
+          imageUrl: item.product.imageUrl
+        },
+        quantity: item.quantity,
+        selectedDuration: item.selectedDuration || null
+      })),
+      total,
+      status: method === 'WhatsApp' ? 'Pending' : 'Completed',
+      method,
+      keys
+    };
+
+    await addDoc(collection(db, 'orders'), newOrder);
+    set({ cart: [] });
+  },
+
+  addProduct: async (product) => {
+    const { id, ...data } = product;
+    await setDoc(doc(collection(db, 'products')), data);
+  },
+
+  updateProduct: async (id, data) => {
+    await updateDoc(doc(db, 'products', id), data);
+  },
+
+  deleteProduct: async (id) => {
+    await deleteDoc(doc(db, 'products', id));
+  },
+
+  updateOrderStatus: async (orderId, status) => {
+    await updateDoc(doc(db, 'orders', orderId), { status });
+  },
+
+  updateWhatsAppNumber: async (num) => {
+    await setDoc(doc(db, 'settings', 'general'), { whatsappNumber: num }, { merge: true });
+  },
+  
+  addBanner: async (banner) => {
+    await addDoc(collection(db, 'banners'), banner);
+  },
+  
+  updateBanner: async (id, data) => {
+    await updateDoc(doc(db, 'banners', id), data);
+  },
+  
+  deleteBanner: async (id) => {
+    await deleteDoc(doc(db, 'banners', id));
+  },
+  
+  toggleBannerStatus: async (id) => {
+    const banner = get().banners.find(b => b.id === id);
+    if (banner) {
+      await updateDoc(doc(db, 'banners', id), { isActive: !banner.isActive });
+    }
+  },
+  
+  addPaymentMethod: async (method) => {
+    await addDoc(collection(db, 'paymentMethods'), method);
+  },
+  
+  updatePaymentMethod: async (id, data) => {
+    await updateDoc(doc(db, 'paymentMethods', id), data);
+  },
+  
+  deletePaymentMethod: async (id) => {
+    await deleteDoc(doc(db, 'paymentMethods', id));
+  },
+
+  addReview: async (review) => {
+    await addDoc(collection(db, 'reviews'), {
+      ...review,
+      date: new Date().toISOString()
+    });
+  },
+  
+  deleteReview: async (id) => {
+    await deleteDoc(doc(db, 'reviews', id));
+  }
+}))
