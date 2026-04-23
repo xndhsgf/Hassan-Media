@@ -12,9 +12,13 @@ export default function AdminProducts() {
     name: '',
     description: '',
     price: 0,
+    priceUsd: 0,
+    priceEgp: 0,
+    duration: '1 Month',
+    offerBadge: '',
     originalPrice: 0,
-    category: 'Software',
-    type: 'License Key',
+    category: 'AI Tools',
+    type: 'Account',
     image: '',
     rating: 5,
     reviewsCount: 0,
@@ -29,7 +33,7 @@ export default function AdminProducts() {
   const openAdd = () => {
     setEditingId(null);
     setFormData({
-      name: '', description: '', price: 0, originalPrice: 0,
+      name: '', description: '', price: 0, priceUsd: 0, priceEgp: 0, duration: '1 Month', offerBadge: '', originalPrice: 0,
       category: 'Operating Systems', type: 'License Key', image: '',
       rating: 5, reviewsCount: 0, stock: 10, features: ['Instant Delivery']
     });
@@ -127,20 +131,40 @@ export default function AdminProducts() {
               <h2 className="text-xl font-bold text-slate-900 mb-6">{editingId ? 'Edit Product' : 'Add New Product'}</h2>
               <form onSubmit={handleSave} className="space-y-6">
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                  <div className="md:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                  <div className="md:col-span-3">
                     <label className="block text-sm font-medium text-slate-700 mb-1">Product Name</label>
                     <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" />
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Price ($)</label>
-                    <input type="number" step="0.01" required value={formData.price} onChange={e => setFormData({...formData, price: parseFloat(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" />
+                  
+                  <div className="md:col-span-3">
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none resize-none h-20" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Original Price (optional)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Price (USD $)</label>
+                    <input type="number" step="0.01" required value={formData.priceUsd} onChange={e => setFormData({...formData, priceUsd: parseFloat(e.target.value), price: parseFloat(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Price (EGP £)</label>
+                    <input type="number" step="0.01" required value={formData.priceEgp} onChange={e => setFormData({...formData, priceEgp: parseFloat(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Original Price ($) (optional)</label>
                     <input type="number" step="0.01" value={formData.originalPrice} onChange={e => setFormData({...formData, originalPrice: parseFloat(e.target.value)})} className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Subscription Duration</label>
+                    <input type="text" value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})} placeholder="e.g. 1 Month, Lifetime..." className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Offer Badge text</label>
+                    <input type="text" value={formData.offerBadge} onChange={e => setFormData({...formData, offerBadge: e.target.value})} placeholder="e.g. 50% OFF (leave blank for none)" className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" />
                   </div>
 
                   <div>
@@ -168,7 +192,7 @@ export default function AdminProducts() {
                     <input type="text" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} placeholder="https://..." className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" />
                   </div>
                   
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-3">
                     <label className="block text-sm font-medium text-slate-700 mb-1">Features (comma separated)</label>
                     <input type="text" value={formData.features?.join(', ')} onChange={e => setFormData({...formData, features: e.target.value.split(',').map(s => s.trim())})} className="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" placeholder="Feature 1, Feature 2" />
                   </div>

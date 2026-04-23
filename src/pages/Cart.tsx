@@ -1,41 +1,42 @@
 import { Link, useNavigate } from 'react-router';
 import { useStore } from '../store/useStore';
-import { Trash2, ShieldCheck, Lock, ShoppingCart, MessageCircle } from 'lucide-react';
+import { Trash2, ShieldCheck, Lock, ShoppingCart, MessageCircle, ArrowRight, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { PaymentMethod } from '../data/mockData';
 
 export default function Cart() {
-  const { cart, removeFromCart, placeOrder, clearCart, whatsappNumber, user } = useStore();
+  const { cart, removeFromCart, placeOrder, clearCart, whatsappNumber, user, paymentMethods } = useStore();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   
-  const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const subtotalUsb = cart.reduce((sum, item) => sum + ((item.product.priceUsd || item.product.price) * item.quantity), 0);
+  const subtotalEgp = cart.reduce((sum, item) => sum + ((item.product.priceEgp || (item.product.price * 50)) * item.quantity), 0);
   const tax = 0; // Tax free digital goods
-  const total = subtotal + tax;
+  
+  const totalUsd = subtotalUsb + tax;
+  const totalEgp = subtotalEgp + (tax * 50);
 
   const handleCheckout = () => {
     if (!user) return navigate('/login');
+    if (!selectedMethod) return alert("Please select a payment method.");
     setIsProcessing(true);
-    setTimeout(() => {
-      placeOrder('Auto');
-      setIsProcessing(false);
-      navigate('/dashboard'); 
-    }, 1500);
-  };
+    placeOrder('WhatsApp'); // Assuming manual flow saves it as Whatsapp or manual
 
-  const handleWhatsAppOrder = () => {
-    if (!user) return navigate('/login');
-    placeOrder('WhatsApp');
-    
-    // Format message
     let text = `Hello! I would like to order the following products:\n\n`;
     cart.forEach(item => {
-      text += `- ${item.quantity}x ${item.product.name} ($${item.product.price})\n`;
+      text += `- ${item.quantity}x ${item.product.name} (${Number(item.product.priceEgp || (item.product.price * 50)).toFixed(2)} EGP)\n`;
     });
-    text += `\n*Total: $${total.toFixed(2)}*\n\nPlease provide payment details.`;
+    text += `\n*Total: ${totalEgp.toFixed(2)} EGP*\n\n`;
+    text += `Payment Method: ${selectedMethod.name}\n`;
+    text += `I have successfully transferred the amount. Please verify and send the products!`;
     
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank');
-    navigate('/dashboard'); 
+    setTimeout(() => {
+      setIsProcessing(false);
+      window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank');
+      navigate('/dashboard'); 
+    }, 1500);
   };
 
   if (cart.length === 0) {
@@ -83,13 +84,16 @@ export default function Cart() {
                       <h3 className="font-bold text-slate-900 text-sm leading-snug mb-1 truncate">{item.product.name}</h3>
                       <p className="text-xs text-slate-500">Qty: {item.quantity}</p>
                     </div>
-                    <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-2 sm:gap-4 shrink-0">
-                      <span className="font-bold text-slate-900 text-sm sm:text-base">${(item.product.price * item.quantity).toFixed(2)}</span>
+                    <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between w-full sm:w-auto gap-2 sm:gap-4 shrink-0">
+                      <div className="flex flex-col items-center sm:items-end justify-center w-full sm:w-auto gap-1 sm:gap-2 shrink-0">
+                        <span className="font-bold text-slate-900 text-sm sm:text-base">${((item.product.priceUsd || item.product.price) * item.quantity).toFixed(2)}</span>
+                        <span className="font-bold text-slate-500 text-xs">{((item.product.priceEgp || item.product.price * 50) * item.quantity).toFixed(2)} EGP</span>
+                      </div>
                       <button 
                         onClick={() => removeFromCart(item.product.id)}
-                        className="p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-lg transition"
+                        className="p-1.5 ml-2 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-lg transition"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
                   </motion.li>
@@ -98,9 +102,36 @@ export default function Cart() {
             </ul>
           </div>
           
-          <div className="mt-6 flex items-start sm:items-center p-4 bg-emerald-50 rounded-xl text-emerald-800 text-xs sm:text-sm border border-emerald-100">
-             <ShieldCheck className="w-5 h-5 mr-3 text-emerald-600 shrink-0 mt-0.5 sm:mt-0"/>
-             <p className="leading-relaxed"><strong>Auto-Delivery Active:</strong> Your digital items will be instantly available in your dashboard and emailed to you right after checkout via Stripe.</p>
+          <div className="mt-6 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 mb-6 lg:mb-0">
+             <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-indigo-600"/> Payment Methods</h2>
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {paymentMethods.map(method => (
+                  <label key={method.id} className={`border rounded-xl p-4 cursor-pointer flex flex-col gap-3 transition-colors ${selectedMethod?.id === method.id ? 'border-indigo-600 ring-1 ring-indigo-600 bg-indigo-50/50' : 'border-slate-200 hover:border-slate-300'}`}>
+                    <div className="flex justify-between items-center">
+                      <input 
+                        type="radio" 
+                        name="payment_method" 
+                        className="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-600"
+                        onChange={() => setSelectedMethod(method)}
+                        checked={selectedMethod?.id === method.id}
+                      />
+                      {method.imageUrl && <img src={method.imageUrl} alt={method.name} className="h-6 object-contain" />}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 leading-tight mb-1">{method.name}</h3>
+                      <p className="text-xs text-slate-500 font-medium">Account: <span className="text-slate-900">{method.accountNumber}</span></p>
+                    </div>
+                    {selectedMethod?.id === method.id && (
+                       <div className="bg-white border text-xs text-slate-600 border-indigo-100 p-3 rounded-lg mt-2">
+                         {method.instructions}
+                       </div>
+                    )}
+                  </label>
+                ))}
+                {paymentMethods.length === 0 && (
+                  <p className="col-span-full text-slate-500 text-sm">No payment methods available.</p>
+                )}
+             </div>
           </div>
         </div>
 
@@ -111,18 +142,18 @@ export default function Cart() {
             
             <div className="space-y-4 mb-6">
               <div className="flex justify-between text-sm text-slate-600">
-                <span>Subtotal</span>
-                <span className="font-medium text-slate-900">${subtotal.toFixed(2)}</span>
+                <span>Subtotal (USD)</span>
+                <span className="font-medium text-slate-900">${subtotalUsb.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-slate-600">
-                <span>Tax</span>
-                <span className="font-medium text-slate-900">${tax.toFixed(2)}</span>
+                <span>Subtotal (EGP)</span>
+                <span className="font-medium text-slate-900">{subtotalEgp.toFixed(2)} EGP</span>
               </div>
               <div className="pt-4 border-t border-slate-100 flex justify-between items-end">
                 <span className="text-base font-bold text-slate-900">Total</span>
                 <div className="text-right">
-                  <span className="text-2xl sm:text-3xl font-black text-slate-900">${total.toFixed(2)}</span>
-                  <p className="text-[10px] sm:text-xs text-slate-500 font-medium">USD</p>
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900">{totalEgp.toFixed(2)}</span>
+                  <p className="text-[10px] sm:text-xs text-slate-500 font-medium">EGP</p>
                 </div>
               </div>
             </div>
@@ -130,35 +161,22 @@ export default function Cart() {
             <div className="flex flex-col gap-3">
               <button 
                 onClick={handleCheckout}
-                disabled={isProcessing}
+                disabled={isProcessing || !selectedMethod}
                 className="w-full flex items-center justify-center gap-2 py-3.5 sm:py-4 px-4 sm:px-6 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-colors disabled:opacity-75 disabled:cursor-not-allowed group text-sm sm:text-base"
               >
                 {isProcessing ? (
                   <span>Processing...</span>
                 ) : (
                   <>
-                    <Lock className="w-4 h-4 text-slate-400 group-hover:text-white transition shrink-0" /> Checkout with Card
+                    I have transferred<ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-white transition shrink-0 ml-1" />
                   </>
                 )}
               </button>
-
-              <div className="relative flex items-center justify-center py-2">
-                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
-                 <span className="relative bg-white px-2 text-[10px] sm:text-xs text-slate-400 font-medium uppercase tracking-wider">OR</span>
-              </div>
-
-              <button 
-                onClick={handleWhatsAppOrder}
-                className="w-full flex items-center justify-center gap-2 py-3.5 sm:py-4 px-4 sm:px-6 bg-[#25D366] hover:bg-[#1ebe57] text-white rounded-xl font-bold transition-colors shadow-lg shadow-green-500/20 text-sm sm:text-base"
-              >
-                <MessageCircle className="w-5 h-5 shrink-0" /> Order via WhatsApp
-              </button>
+              {!selectedMethod && (
+                 <p className="text-xs text-red-500 text-center mt-1 font-medium">Please select a payment method</p>
+              )}
             </div>
             
-            <div className="mt-8 pt-6 border-t border-slate-100 flex justify-center gap-3 opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
-               <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" className="h-5 sm:h-6" />
-               <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-3 sm:h-4 mt-1" />
-            </div>
           </div>
         </div>
       </div>

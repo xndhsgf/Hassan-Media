@@ -204,7 +204,8 @@ export default function MainLayout() {
                 <li><Link to="/store?cat=AI Tools" className="hover:text-indigo-600 transition font-medium">AI Tools</Link></li>
                 <li><Link to="/store?cat=Design Tools" className="hover:text-indigo-600 transition font-medium">Design Software</Link></li>
                 <li><Link to="/store?cat=Operating Systems" className="hover:text-indigo-600 transition font-medium">Operating Systems</Link></li>
-                <li><Link to="/store?cat=Security" className="hover:text-indigo-600 transition font-medium">Antivirus & VPNs</Link></li>
+                <li><Link to="/store?cat=Security" className="hover:text-indigo-600 transition font-medium">Security</Link></li>
+                <li><Link to="/store?cat=Productivity" className="hover:text-indigo-600 transition font-medium">Productivity</Link></li>
               </ul>
             </div>
 

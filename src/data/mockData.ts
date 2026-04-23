@@ -6,7 +6,11 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
+  price: number; // Keep for backward compatibility, handle as default or primary
+  priceUsd: number;
+  priceEgp: number;
+  duration: string; // e.g. "1 Month", "1 Year"
+  offerBadge?: string; // e.g. "50% OFF"
   originalPrice?: number;
   category: Category;
   type: ProductType;
@@ -17,12 +21,34 @@ export interface Product {
   features: string[];
 }
 
+export interface PaymentMethod {
+  id: string;
+  name: string;
+  imageUrl: string;
+  accountNumber: string;
+  instructions: string;
+}
+
+export interface Review {
+  id: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
 export const mockProducts: Product[] = [
   {
     id: '1',
-    name: 'ChatGPT Plus Premium Account (1 Month)',
+    name: 'ChatGPT Plus Premium Account',
     description: 'Get advanced features, faster response times, and priority access to new features.',
     price: 18.99,
+    priceUsd: 18.99,
+    priceEgp: 950,
+    duration: '1 Month',
+    offerBadge: 'HOT',
     originalPrice: 20.00,
     category: 'AI Tools',
     type: 'Account',
@@ -35,8 +61,12 @@ export const mockProducts: Product[] = [
   {
     id: '2',
     name: 'Adobe Creative Cloud 2024 All Apps',
-    description: '1 Year Subscription to all Adobe apps including Photoshop, Illustrator, Premiere Pro.',
+    description: 'Subscription to all Adobe apps including Photoshop, Illustrator, Premiere Pro.',
     price: 299.99,
+    priceUsd: 299.99,
+    priceEgp: 14500,
+    duration: '1 Year',
+    offerBadge: '50% OFF',
     originalPrice: 599.88,
     category: 'Design Tools',
     type: 'Subscription',
@@ -51,6 +81,9 @@ export const mockProducts: Product[] = [
     name: 'Windows 11 Pro OEM Key',
     description: 'Lifetime activation for 1 PC. Instant delivery to your email/dashboard.',
     price: 15.50,
+    priceUsd: 15.50,
+    priceEgp: 750,
+    duration: 'Lifetime',
     originalPrice: 199.99,
     category: 'Operating Systems',
     type: 'License Key',
@@ -65,6 +98,9 @@ export const mockProducts: Product[] = [
     name: 'Kaspersky Total Security 2024',
     description: 'Premium protection for up to 3 devices for 1 Year. VPN included.',
     price: 24.00,
+    priceUsd: 24.00,
+    priceEgp: 1200,
+    duration: '1 Year',
     originalPrice: 49.99,
     category: 'Security',
     type: 'License Key',
@@ -79,6 +115,9 @@ export const mockProducts: Product[] = [
     name: 'Microsoft Office 2021 Professional Plus',
     description: 'Genuine license key for Lifetime use. Binds to your Microsoft account.',
     price: 29.90,
+    priceUsd: 29.90,
+    priceEgp: 1450,
+    duration: 'Lifetime',
     originalPrice: 249.99,
     category: 'Productivity',
     type: 'License Key',
@@ -93,6 +132,9 @@ export const mockProducts: Product[] = [
     name: 'Midjourney Pro Account (Shared)',
     description: 'Shared premium account for unlimited fast rendering. 30 Days access.',
     price: 12.99,
+    priceUsd: 12.99,
+    priceEgp: 650,
+    duration: '1 Month',
     category: 'AI Tools',
     type: 'Account',
     image: 'https://images.unsplash.com/photo-1681412330773-4f9e160ab557?auto=format&fit=crop&w=600&q=80',

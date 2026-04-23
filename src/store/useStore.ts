@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { mockProducts, Product, ProductType } from '../data/mockData';
+import { mockProducts, Product, ProductType, PaymentMethod, Review } from '../data/mockData';
 import { db, auth } from '../lib/firebase';
 import { 
   collection, doc, setDoc, getDocs, onSnapshot, 
@@ -52,6 +52,8 @@ interface AppState {
   allOrders: Order[];
   whatsappNumber: string;
   banners: Banner[];
+  paymentMethods: PaymentMethod[];
+  reviews: Review[];
   isInitialized: boolean;
   
   // Real-time Init
@@ -78,6 +80,15 @@ interface AppState {
   updateBanner: (id: string, data: Partial<Banner>) => Promise<void>;
   deleteBanner: (id: string) => Promise<void>;
   toggleBannerStatus: (id: string) => Promise<void>;
+
+  // Payment Methods functions
+  addPaymentMethod: (method: Omit<PaymentMethod, 'id'>) => Promise<void>;
+  updatePaymentMethod: (id: string, data: Partial<PaymentMethod>) => Promise<void>;
+  deletePaymentMethod: (id: string) => Promise<void>;
+  
+  // Reviews functions
+  addReview: (review: Omit<Review, 'id' | 'date'>) => Promise<void>;
+  deleteReview: (id: string) => Promise<void>;
 }
 
 const generateMockDelivery = (type: ProductType) => {
@@ -107,6 +118,11 @@ export const useStore = create<AppState>()(
           isActive: true
         }
     ],
+    paymentMethods: [
+      { id: '1', name: 'Vodafone Cash', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Vodafone_logo.svg/200px-Vodafone_logo.svg.png', accountNumber: '01000000000', instructions: 'Transfer to this number.' },
+      { id: '2', name: 'InstaPay', imageUrl: 'https://play-lh.googleusercontent.com/yD9Tns1S08a4p15-t3SCLtM7G5qN3M6j0jpx0H47N1L1zH-1P1b2vU1wF8L3X5Y5xQ=w240-h480-rw', accountNumber: 'user@instapay', instructions: 'Transfer via InstaPay.' }
+    ],
+    reviews: [],
     isInitialized: false,
 
     setUser: (user) => set({ user }),
@@ -148,6 +164,22 @@ export const useStore = create<AppState>()(
         allOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         set({ allOrders });
       }, (err) => console.error("Orders listener error:", err));
+
+      // Listen to Payment Methods
+      onSnapshot(collection(db, 'paymentMethods'), (snapshot) => {
+        const paymentMethods: PaymentMethod[] = [];
+        snapshot.forEach((doc) => paymentMethods.push({ id: doc.id, ...doc.data() } as PaymentMethod));
+        if (paymentMethods.length > 0) set({ paymentMethods });
+      }, (err) => console.error("PaymentMethods listener error:", err));
+
+      // Listen to Reviews
+      onSnapshot(collection(db, 'reviews'), (snapshot) => {
+        const reviews: Review[] = [];
+        snapshot.forEach((doc) => reviews.push({ id: doc.id, ...doc.data() } as Review));
+        // Sort by date descending
+        reviews.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        set({ reviews });
+      }, (err) => console.error("Reviews listener error:", err));
 
       // Listen to Settings
       onSnapshot(doc(db, 'settings', 'global'), (docSnap) => {
@@ -295,6 +327,28 @@ export const useStore = create<AppState>()(
       if (banner) {
          await updateDoc(doc(db, 'banners', id), { isActive: !banner.isActive });
       }
+    },
+    
+    addPaymentMethod: async (method) => {
+      const docRef = doc(collection(db, 'paymentMethods'));
+      await setDoc(docRef, method);
+    },
+    
+    updatePaymentMethod: async (id, data) => {
+      await updateDoc(doc(db, 'paymentMethods', id), data);
+    },
+    
+    deletePaymentMethod: async (id) => {
+      await deleteDoc(doc(db, 'paymentMethods', id));
+    },
+
+    addReview: async (review) => {
+      const docRef = doc(collection(db, 'reviews'));
+      await setDoc(docRef, { ...review, date: new Date().toISOString() });
+    },
+    
+    deleteReview: async (id) => {
+      await deleteDoc(doc(db, 'reviews', id));
     }
   })
 );

@@ -98,21 +98,31 @@ export default function Store() {
                   key={product.id} 
                   className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-xl hover:shadow-slate-200/50 transition-all flex flex-col group p-4 pointer-events-auto"
                 >
-                  <div className="aspect-[4/3] w-full rounded-xl bg-slate-100 mb-4 overflow-hidden relative">
-                    <span className="absolute top-2 left-2 bg-slate-900/90 backdrop-blur px-2 py-1 text-[10px] uppercase font-bold text-white rounded shadow-sm z-10 flex items-center gap-1">
-                      <Tag className="w-3 h-3" /> {product.type}
-                    </span>
+                  <Link to={`/product/${product.id}`} className="aspect-[4/3] w-full rounded-xl bg-slate-100 mb-4 overflow-hidden relative block">
+                    <div className="absolute top-2 left-2 flex gap-1 z-10 flex-col">
+                      <span className="bg-slate-900/90 backdrop-blur px-2 py-1 text-[10px] uppercase font-bold text-white rounded shadow-sm flex items-center gap-1 w-fit">
+                        <Tag className="w-3 h-3" /> {product.type}
+                      </span>
+                      {product.offerBadge && (
+                        <span className="bg-amber-500 text-white px-2 py-1 text-[10px] font-bold uppercase tracking-widest rounded shadow-sm w-fit">
+                          {product.offerBadge}
+                        </span>
+                      )}
+                    </div>
                     {product.originalPrice && (
                        <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 text-[10px] uppercase font-bold rounded shadow-sm z-10">
-                          -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+                          -{Math.round(((product.originalPrice - (product.priceUsd || product.price)) / product.originalPrice) * 100)}%
                        </div>
                     )}
                     <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
-                  </div>
+                  </Link>
                   
                   <div className="flex-1 flex flex-col">
-                    <div className="text-xs text-indigo-600 font-bold mb-1 uppercase tracking-wider">{product.category}</div>
-                    <h3 className="font-bold text-slate-900 text-base leading-snug mb-2">{product.name}</h3>
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="text-xs text-indigo-600 font-bold uppercase tracking-wider">{product.category}</div>
+                      <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{product.duration}</span>
+                    </div>
+                    <Link to={`/product/${product.id}`} className="font-bold text-slate-900 text-base leading-snug mb-2 hover:text-indigo-600 transition-colors">{product.name}</Link>
                     
                     <ul className="text-xs text-slate-500 mb-4 space-y-1.5 flex-1 font-medium">
                       {product.features && product.features.map((feat, i) => (
@@ -123,12 +133,13 @@ export default function Store() {
                     <div className="mt-auto border-t border-slate-100 pt-4 flex items-center justify-between">
                       <div className="flex flex-col">
                         <div className="flex items-end gap-2">
-                          <span className="text-xl font-black text-slate-900">${Number(product.price).toFixed(2)}</span>
+                          <span className="text-xl font-black text-slate-900">${Number(product.priceUsd || product.price).toFixed(2)}</span>
                           {product.originalPrice && <span className="text-sm text-slate-400 line-through mb-1">${Number(product.originalPrice).toFixed(2)}</span>}
                         </div>
+                        <span className="text-xs font-bold text-slate-500">{Number(product.priceEgp || (product.price * 50)).toFixed(2)} EGP</span>
                       </div>
                       <button 
-                        onClick={() => addToCart(product)}
+                        onClick={(e) => { e.preventDefault(); addToCart(product); }}
                         className="bg-slate-900 hover:bg-indigo-600 text-white rounded-xl w-10 h-10 flex items-center justify-center transition-colors shrink-0 shadow-sm shadow-slate-900/20 hover:shadow-indigo-600/30 active:scale-95"
                         aria-label="Add to cart"
                       >

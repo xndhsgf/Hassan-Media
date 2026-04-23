@@ -97,35 +97,6 @@ export default function Home() {
       {/* Dynamic Banner Slider */}
       <BannerSlider />
 
-      {/* Features Grid */}
-      <section className="w-full py-10 sm:py-16 bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            <div className="flex flex-col items-center text-center p-4 sm:p-6">
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4">
-                <Zap className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">Instant Delivery</h3>
-              <p className="text-slate-500 text-sm font-medium">Your product keys and account details are sent automatically 24/7 without delays.</p>
-            </div>
-            <div className="flex flex-col items-center text-center p-4 sm:p-6">
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4">
-                <Shield className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">100% Genuine</h3>
-              <p className="text-slate-500 text-sm font-medium">All our software licenses and subscriptions are entirely legit with direct manufacturer warranty.</p>
-            </div>
-            <div className="flex flex-col items-center text-center p-4 sm:p-6 sm:col-span-2 md:col-span-1">
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4">
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">Secure Payments</h3>
-              <p className="text-slate-500 text-sm font-medium">We use bank-grade 256-bit encryption and integrate with Stripe & PayPal for your safety.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Featured Products */}
       <section className="w-full py-16 sm:py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -148,30 +119,43 @@ export default function Home() {
           >
             {featured.map(product => (
               <motion.div key={product.id} variants={item} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
-                <div className="aspect-video w-full rounded-xl overflow-hidden mb-4 bg-slate-100 relative">
-                  <span className="absolute top-2 left-2 bg-slate-900/90 backdrop-blur-sm px-2 py-1 text-[10px] font-bold text-white uppercase tracking-widest rounded shadow-sm z-10">
-                    {product.type}
-                  </span>
+                <Link to={`/product/${product.id}`} className="aspect-video w-full rounded-xl overflow-hidden mb-4 bg-slate-100 relative block">
+                  <div className="absolute top-2 left-2 flex gap-1 z-10 flex-col">
+                    <span className="bg-slate-900/90 backdrop-blur-sm px-2 py-1 text-[10px] font-bold text-white uppercase tracking-widest rounded shadow-sm w-fit">
+                      {product.type}
+                    </span>
+                    {product.offerBadge && (
+                      <span className="bg-amber-500 text-white px-2 py-1 text-[10px] font-bold uppercase tracking-widest rounded shadow-sm w-fit">
+                        {product.offerBadge}
+                      </span>
+                    )}
+                  </div>
                   {product.originalPrice && (
                      <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 text-[10px] uppercase font-bold rounded shadow-sm z-10">
-                        -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+                        -{Math.round(((product.originalPrice - (product.priceUsd || product.price)) / product.originalPrice) * 100)}%
                      </div>
                   )}
                   <img src={product.image} alt={product.name} className="w-full h-full object-cover transform hover:scale-105 transition duration-700" />
-                </div>
+                </Link>
                 <div className="flex-1 flex flex-col">
-                  <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1">{product.category}</p>
-                  <h3 className="text-sm font-bold text-slate-900 mb-3 line-clamp-2 leading-tight">{product.name}</h3>
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-indigo-600">{product.category}</p>
+                    <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{product.duration}</span>
+                  </div>
+                  <Link to={`/product/${product.id}`} className="text-sm font-bold text-slate-900 mb-3 line-clamp-2 leading-tight hover:text-indigo-600 transition-colors">{product.name}</Link>
                   <div className="mt-auto flex items-center justify-between">
-                    <div>
-                      <span className="text-lg font-black text-slate-900">${Number(product.price).toFixed(2)}</span>
-                      {product.originalPrice && (
-                        <span className="text-[10px] sm:text-xs text-slate-400 line-through ml-2">${Number(product.originalPrice).toFixed(2)}</span>
-                      )}
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        <span className="text-lg font-black text-slate-900">${Number(product.priceUsd || product.price).toFixed(2)}</span>
+                        {product.originalPrice && (
+                          <span className="text-[10px] sm:text-xs text-slate-400 line-through ml-2">${Number(product.originalPrice).toFixed(2)}</span>
+                        )}
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-500">{Number(product.priceEgp || (product.price * 50)).toFixed(2)} EGP</span>
                     </div>
                     <button 
-                      onClick={() => addToCart(product)}
-                      className="h-8 md:h-10 px-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors shadow-sm shadow-slate-900/20 hover:shadow-indigo-600/30 active:scale-95"
+                      onClick={(e) => { e.preventDefault(); addToCart(product); }}
+                      className="h-8 md:h-10 px-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors shadow-sm shadow-slate-900/20 hover:shadow-indigo-600/30 active:scale-95 shrink-0 ml-2"
                     >
                       Add
                     </button>

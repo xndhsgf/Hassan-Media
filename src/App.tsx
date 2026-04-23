@@ -3,12 +3,14 @@ import MainLayout from './components/layout/MainLayout';
 import AdminLayout from './components/layout/AdminLayout';
 import Home from './pages/Home';
 import Store from './pages/Store';
+import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/Cart';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminBanners from './pages/admin/AdminBanners';
+import AdminPaymentMethods from './pages/admin/AdminPaymentMethods';
 import Login from './pages/Login';
 import { useEffect } from 'react';
 import { useStore } from './store/useStore';
@@ -62,6 +64,7 @@ export default function App() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="store" element={<Store />} />
+          <Route path="product/:id" element={<ProductDetails />} />
           <Route path="cart" element={<Cart />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="dashboard/orders" element={<Dashboard />} />
@@ -75,6 +78,7 @@ export default function App() {
           <Route path="products" element={<AdminProducts />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="banners" element={<AdminBanners />} />
+          <Route path="payment-methods" element={<AdminPaymentMethods />} />
           <Route path="*" element={<div className="p-8"><h2 className="text-xl font-bold">Coming Soon</h2><p className="text-slate-500 mt-2">This section of the admin panel is under construction.</p></div>} />
         </Route>
         

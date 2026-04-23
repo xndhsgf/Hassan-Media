@@ -21,8 +21,8 @@ export default function AdminLayout() {
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
     { name: 'Products', path: '/admin/products', icon: ShoppingBag },
     { name: 'Orders', path: '/admin/orders', icon: BarChart3 },
+    { name: 'Payment Methods', path: '/admin/payment-methods', icon: Key },
     { name: 'Banners', path: '/admin/banners', icon: Image },
-    { name: 'Keys & Codes', path: '/admin/keys', icon: Key },
     { name: 'Users', path: '/admin/users', icon: Users },
     { name: 'Promotions', path: '/admin/promos', icon: Tag },
   ];
