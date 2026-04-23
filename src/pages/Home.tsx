@@ -24,7 +24,7 @@ export default function Home() {
   return (
     <div className="bg-slate-50 min-h-screen">
       {/* Hero Banner Carousel */}
-      <section className="relative bg-slate-900 overflow-hidden h-[40vh] sm:h-[60vh] min-h-[300px]">
+      <section className="relative bg-slate-900 overflow-hidden h-[35vh] sm:h-[60vh] min-h-[250px]">
         {activeBanners.length > 0 ? (
           <>
              {activeBanners.map((banner, index) => (
@@ -36,7 +36,7 @@ export default function Home() {
                   className="absolute inset-0"
                   style={{ pointerEvents: currentSlide === index ? 'auto' : 'none' }}
                 >
-                  <img src={banner.imageUrl} alt="Offer" className="w-full h-full object-cover opacity-60" />
+                  <img src={banner.imageUrl} alt="Offer" className="w-full h-full object-cover lg:object-fill" />
                 </motion.div>
              ))}
              {activeBanners.length > 1 && (
