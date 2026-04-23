@@ -86,31 +86,28 @@ export default function ProductDetails() {
         {/* Right Column: Buy Actions */}
         <div className="flex flex-col">
           <div className="mb-8">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-md uppercase tracking-wider">{product.category}</span>
-              <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-md uppercase tracking-wider">{product.type}</span>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-[10px] sm:text-xs font-black rounded-full uppercase tracking-widest">{product.category}</span>
+              <span className="px-3 py-1 bg-slate-100 text-slate-700 text-[10px] sm:text-xs font-black rounded-full uppercase tracking-widest">{product.type}</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 leading-tight mb-4">{product.name}</h1>
-            <p className="text-lg text-slate-600 leading-relaxed mb-6">{product.description}</p>
+            <h1 className="font-display text-3xl sm:text-5xl font-black text-slate-900 leading-tight mb-4 tracking-tight">{product.name}</h1>
+            <p className="text-base sm:text-lg text-slate-500 leading-relaxed mb-8 font-medium">{product.description}</p>
             
-            <div className="flex items-baseline gap-3 mb-8 flex-wrap">
-                <span className="text-5xl font-extrabold text-slate-900">
-                  {(discountedPrice || 0).toLocaleString()} {t('common.currency')}
+            <div className="flex items-baseline gap-3 mb-10 flex-wrap">
+                <span className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter">
+                  {(discountedPrice || 0).toLocaleString()} <span className="text-xl sm:text-2xl font-bold text-indigo-600">{t('common.currency')}</span>
                 </span>
                 {product.discountPercentage && (
-                  <span className="text-2xl font-bold text-slate-400 line-through decoration-slate-300">
-                    {(basePrice || 0).toLocaleString()} {t('common.currency')}
+                  <span className="text-xl sm:text-2xl font-bold text-slate-300 line-through decoration-slate-300/50">
+                    {(basePrice || 0).toLocaleString()}
                   </span>
                 )}
-               {selectedDuration && (
-                 <span className="text-slate-500 font-medium ml-2">/ {selectedDuration.label}</span>
-               )}
             </div>
 
             {product.durationOptions && product.durationOptions.length > 0 && (
-              <div className="mb-8 space-y-3">
-                <h3 className="font-bold text-slate-900">{t('product.selectPlan')}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="mb-10 space-y-4">
+                <h3 className="font-display font-bold text-slate-900 tracking-tight">{t('product.selectPlan')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {product.durationOptions.map(duration => {
                     const durationDiscounted = product.discountPercentage 
                       ? duration.price * (1 - product.discountPercentage / 100)
@@ -120,16 +117,16 @@ export default function ProductDetails() {
                       <button
                         key={duration.id}
                         onClick={() => setSelectedDuration(duration)}
-                        className={`p-3 rounded-xl border transition-all text-left flex flex-col justify-center items-start ${
+                        className={`p-4 rounded-3xl border-2 transition-all text-left flex flex-col justify-center items-start group ${
                           selectedDuration?.id === duration.id 
-                            ? 'border-indigo-600 bg-indigo-50 shadow-sm shadow-indigo-200' 
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                            ? 'border-indigo-600 bg-indigo-50/50 shadow-lg shadow-indigo-200/50' 
+                            : 'border-slate-100 hover:border-slate-200 bg-white'
                         }`}
                       >
-                        <span className={`text-sm font-bold ${selectedDuration?.id === duration.id ? 'text-indigo-700' : 'text-slate-700'}`}>
+                        <span className={`text-sm font-black ${selectedDuration?.id === duration.id ? 'text-indigo-700' : 'text-slate-900'}`}>
                           {duration.label}
                         </span>
-                        <span className={`text-xs mt-1 font-semibold ${selectedDuration?.id === duration.id ? 'text-indigo-600' : 'text-slate-500'}`}>
+                        <span className={`text-xs mt-1 font-bold ${selectedDuration?.id === duration.id ? 'text-indigo-600' : 'text-slate-400'}`}>
                           {(durationDiscounted || 0).toLocaleString()} {t('common.currency')}
                         </span>
                       </button>
@@ -140,12 +137,12 @@ export default function ProductDetails() {
             )}
           </div>
 
-          <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 space-y-6">
+          <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 space-y-6">
             <button 
               onClick={handleAddToCart}
-              className="w-full flex justify-center items-center gap-2 py-4 px-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-lg transition-all shadow-sm shadow-indigo-600/20 active:scale-[0.98]"
+              className="w-full flex justify-center items-center gap-3 py-5 px-8 bg-indigo-600 hover:bg-slate-900 text-white rounded-[2rem] font-black text-lg transition-all shadow-xl shadow-indigo-200 active:scale-95"
             >
-              <ShoppingCart className="w-5 h-5" />
+              <ShoppingCart className="w-6 h-6" />
               {t('product.addToCart')}
             </button>
             

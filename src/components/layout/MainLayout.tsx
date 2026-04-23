@@ -61,13 +61,13 @@ export default function MainLayout() {
             
             <Link to="/" className="flex items-center gap-2 flex-shrink-0 z-50 relative">
               {siteLogo ? (
-                <img src={siteLogo} alt={siteName} className="h-8 w-auto object-contain" />
+                <img src={siteLogo} alt={siteName} className="h-7 sm:h-8 w-auto object-contain" />
               ) : (
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold shadow-sm shadow-indigo-600/20">
-                  <Key className="w-5 h-5" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold shadow-sm shadow-indigo-600/20">
+                  <Key className="w-4 h-4 sm:w-5 h-5" />
                 </div>
               )}
-              <span className="font-bold text-xl tracking-tight text-slate-900">{siteName}</span>
+              <span className="font-display font-black text-lg sm:text-xl tracking-tight text-slate-900">{siteName}</span>
             </Link>
 
             <nav className="hidden md:flex gap-8">

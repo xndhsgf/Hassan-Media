@@ -25,28 +25,28 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-      <h1 className="text-3xl font-bold text-slate-900 mb-8">{t('dashboard.title')}</h1>
+      <h1 className="font-display text-3xl font-black text-slate-900 mb-10 tracking-tight">{t('dashboard.title')}</h1>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-10">
         
         {/* Profile Info */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-            <div className="w-16 h-16 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-2xl font-bold mb-4">
+          <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/40">
+            <div className="w-16 h-16 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-2xl font-black mb-6">
               {user.name.charAt(0)}
             </div>
-            <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
-            <div className="mt-4 space-y-3">
-              <div className="flex items-center text-slate-600 text-sm gap-2">
-                 <Mail className="w-4 h-4 text-slate-400" />
+            <h2 className="font-display text-xl font-black text-slate-900 mb-2">{user.name}</h2>
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center text-slate-500 text-sm gap-3 font-medium">
+                 <Mail className="w-5 h-5 text-slate-300" />
                  {user.email}
               </div>
-              <div className="flex items-center text-slate-600 text-sm gap-2">
-                 <UserIcon className="w-4 h-4 text-slate-400" />
-                 {t('dashboard.role')}: <span className="capitalize font-semibold">{user.role}</span>
+              <div className="flex items-center text-slate-500 text-sm gap-3 font-medium">
+                 <UserIcon className="w-5 h-5 text-slate-300" />
+                 {t('dashboard.role')}: <span className="capitalize font-bold text-slate-700">{user.role}</span>
               </div>
-              <div className="flex items-center text-slate-600 text-sm gap-2">
-                 <Shield className="w-4 h-4 text-emerald-500" />
+              <div className="flex items-center text-slate-500 text-sm gap-3 font-medium">
+                 <Shield className="w-5 h-5 text-emerald-500" />
                  {t('dashboard.activeSecured')}
               </div>
             </div>
@@ -54,37 +54,37 @@ export default function Dashboard() {
         </div>
 
         {/* Orders List */}
-        <div className="lg:col-span-2 space-y-6">
-           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-              <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                <Package className="w-5 h-5 text-indigo-500" />
+        <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+           <div className="bg-white rounded-[2rem] p-6 sm:p-10 border border-slate-100 shadow-xl shadow-slate-200/40">
+              <h2 className="font-display text-xl font-black text-slate-900 mb-8 flex items-center gap-3">
+                <Package className="w-6 h-6 text-indigo-500" />
                 {t('dashboard.orderHistory')}
               </h2>
               
               {myOrders.length === 0 ? (
-                <div className="text-center py-12 bg-slate-50 border border-slate-100 border-dashed rounded-xl">
-                  <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-slate-500 font-medium">{t('dashboard.noOrders')}</p>
+                <div className="text-center py-16 bg-slate-50 border-2 border-slate-100 border-dashed rounded-[2.5rem]">
+                  <Package className="w-14 h-14 text-slate-200 mx-auto mb-4" />
+                  <p className="text-slate-400 font-bold">{t('dashboard.noOrders')}</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {myOrders.map(order => (
-                    <div key={order.id} className="border border-slate-200 rounded-xl overflow-hidden">
-                      <div className="bg-slate-50 p-4 border-b border-slate-200 flex flex-wrap gap-4 justify-between items-center text-sm">
-                        <div>
-                          <p className="text-slate-500 font-medium">{t('dashboard.orderPlaced')}</p>
-                          <p className="font-bold text-slate-900">{new Date(order.date).toLocaleDateString()}</p>
+                    <div key={order.id} className="border border-slate-100 rounded-[2rem] overflow-hidden bg-slate-50/30">
+                      <div className="bg-white p-5 sm:p-6 border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center text-sm">
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{t('dashboard.orderPlaced')}</p>
+                          <p className="font-black text-slate-900">{new Date(order.date).toLocaleDateString()}</p>
                         </div>
-                        <div>
-                          <p className="text-slate-500 font-medium">{t('common.total')}</p>
-                          <p className="font-bold text-slate-900">{(order.total || 0).toLocaleString()} {t('common.currency')}</p>
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{t('common.total')}</p>
+                          <p className="font-black text-indigo-600">{(order.total || 0).toLocaleString()} <span className="text-[10px]">{t('common.currency')}</span></p>
                         </div>
-                        <div>
-                          <p className="text-slate-500 font-medium">{t('dashboard.orderId')}</p>
-                          <p className="font-bold text-slate-900">#{order.id}</p>
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{t('dashboard.orderId')}</p>
+                          <p className="font-black text-slate-900">#{order.id}</p>
                         </div>
-                        <div>
-                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                        <div className="flex items-center gap-3">
+                           <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
                               order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
                               order.status === 'Pending' ? 'bg-amber-100 text-amber-700' :
                               'bg-red-100 text-red-700'
@@ -92,36 +92,41 @@ export default function Dashboard() {
                               {order.status === 'Completed' ? t('dashboard.completed') : 
                                order.status === 'Pending' ? t('dashboard.pending') : t('dashboard.cancelled')}
                             </span>
+                            <button 
+                              onClick={() => handleContactWhatsApp(order)}
+                              className="flex items-center justify-center w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                              title={t('common.contactWhatsApp')}
+                            >
+                              <MessageCircle className="w-5 h-5" />
+                            </button>
                         </div>
-                        <button 
-                          onClick={() => handleContactWhatsApp(order)}
-                          className="flex items-center gap-1 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors border border-emerald-100"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5" />
-                          {t('common.contactWhatsApp')}
-                        </button>
                       </div>
                       
-                      <div className="p-4 space-y-4">
+                      <div className="p-5 sm:p-6 space-y-4">
                         {order.items.map((item, idx) => (
-                          <div key={idx} className="flex gap-4">
-                             <img src={item.product.imageUrl} alt={item.product.name} className="w-16 h-16 rounded-lg object-cover bg-slate-100" />
-                             <div>
-                                <h4 className="font-bold text-slate-900">{item.product.name}</h4>
-                                <p className="text-slate-500 text-sm">{t('cart.qty')}: {item.quantity} {item.selectedDuration && `(${item.selectedDuration.label})`}</p>
+                          <div key={idx} className="flex items-center gap-5">
+                             <div className="w-16 h-16 rounded-2xl bg-white p-2 border border-slate-100 shadow-sm flex-shrink-0">
+                                <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-contain" />
+                             </div>
+                             <div className="min-w-0">
+                                <h4 className="font-bold text-slate-900 truncate">{item.product.name}</h4>
+                                <p className="text-slate-400 text-xs font-bold">{t('cart.qty')}: {item.quantity} {item.selectedDuration && <span className="text-indigo-600 ml-1">({item.selectedDuration.label})</span>}</p>
                              </div>
                           </div>
                         ))}
                       </div>
 
                       {order.status === 'Completed' && order.keys && order.keys.length > 0 && (
-                        <div className="p-4 border-t border-slate-100 bg-emerald-50/50">
-                          <p className="font-bold text-emerald-800 text-sm mb-2">{t('dashboard.yourKeys')}</p>
-                          <div className="space-y-2">
+                        <div className="p-5 sm:p-6 border-t border-slate-100 bg-emerald-50/50">
+                          <p className="font-black text-emerald-800 text-[10px] uppercase tracking-widest mb-4">{t('dashboard.yourKeys')}</p>
+                          <div className="space-y-3">
                             {order.keys.map((key, idx) => (
-                              <div key={idx} className="bg-white border border-emerald-100 p-3 rounded-lg font-mono text-sm text-emerald-700 break-all shadow-sm">
-                                <span className="font-bold text-xs text-emerald-500 uppercase block mb-1">{key.productName}</span>
-                                {key.value}
+                              <div key={idx} className="bg-white border border-emerald-100 p-4 rounded-2xl font-mono text-sm text-emerald-700 break-all shadow-sm relative overflow-hidden group">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                                <span className="font-black text-[10px] text-emerald-500 uppercase block mb-1 tracking-wider">{key.productName}</span>
+                                <div className="flex items-center justify-between gap-4">
+                                   <span className="font-bold">{key.value}</span>
+                                </div>
                               </div>
                             ))}
                           </div>
