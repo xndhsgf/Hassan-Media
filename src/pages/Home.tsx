@@ -1,9 +1,10 @@
 import { useStore } from '../store/useStore';
-import { ArrowRight, Tag, ShieldCheck, Zap, Star } from 'lucide-react';
+import { ArrowRight, Star } from 'lucide-react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
+import ProductCard from '../components/ProductCard';
 
 export default function Home() {
   const { products, banners, paymentMethods } = useStore();
@@ -71,45 +72,10 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.slice(0, 4).map((product) => {
-            const discountedPrice = product.discountPercentage 
-              ? product.price * (1 - product.discountPercentage / 100)
-              : product.price;
-              
-            return (
-              <Link key={product.id} to={`/product/${product.id}`} className="bg-white group rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col">
-                <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
-                  <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold text-slate-700 shadow-sm">
-                    {product.type}
-                  </div>
-                  {product.discountPercentage && (
-                    <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-bold shadow-md shadow-red-500/20">
-                      {product.discountPercentage}% OFF
-                    </div>
-                  )}
-                </div>
-                <div className="p-5 flex flex-col flex-grow">
-                  <h3 className="font-bold text-slate-900 text-lg mb-1 line-clamp-1 group-hover:text-indigo-600 transition-colors">{product.name}</h3>
-                  <p className="text-sm text-slate-500 line-clamp-2 mb-4 flex-grow">{product.description}</p>
-                  <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl font-bold text-indigo-600">
-                        {(discountedPrice || 0).toLocaleString()} {t('common.currency')}
-                      </span>
-                      {product.discountPercentage && (
-                        <span className="text-xs text-slate-400 line-through decoration-slate-300">
-                          {(product.price || 0).toLocaleString()} {t('common.currency')}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{product.category}</span>
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+          {products.slice(0, 4).map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
         </div>
       </section>
     </div>
