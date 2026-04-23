@@ -1,0 +1,68 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // Anyone can create their user profile when they register
+      // Users can read/update their own profile
+      // Admins can read/update all profiles
+      allow create: if isOwner(userId);
+      allow read, update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Products Collection
+    match /products/{productId} {
+      // Anyone can see products
+      // Only Admins can modify products
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Banners Collection
+    match /banners/{bannerId} {
+      // Anyone can see banners
+      // Only Admins can modify banners
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Orders Collection
+    match /orders/{orderId} {
+      // Anyone signed in can create an order
+      // Users can read their own orders
+      // Admins can read/update/delete all orders
+      allow create: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    // Global Settings Collection
+    match /settings/{document=**} {
+      // Anyone can read global settings (like WhatsApp Number)
+      // Only Admins can update settings
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
