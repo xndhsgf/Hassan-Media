@@ -1,169 +1,118 @@
 import { useStore } from '../store/useStore';
-import { Package, Key, Calendar, Copy, CheckCircle2, MessageCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { useState } from 'react';
+import { Package, User as UserIcon, Mail, Shield } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function Dashboard() {
   const { user, allOrders } = useStore();
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const { t } = useTranslation();
+  const myOrders = allOrders.filter(o => o.userId === user?.id);
 
-  if (!user) {
-    return <div className="p-20 text-center text-slate-500">Please login to view your dashboard.</div>;
-  }
-
-  // Filter orders for the current user
-  const myOrders = allOrders.filter(o => o.userId === user.id);
-
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(text);
-    setTimeout(() => setCopiedKey(null), 2000);
-  };
-
-  const getOrderStatusColor = (status: string) => {
-    switch(status) {
-      case 'Completed': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      case 'Pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      default: return 'bg-red-100 text-red-700 border-red-200';
-    }
-  };
+  if (!user) return null;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full overflow-hidden">
-       <div className="mb-8 sm:mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">My Dashboard</h1>
-            <p className="text-slate-500 text-sm sm:text-base">Manage your purchases, subscriptions, and account details.</p>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+      <h1 className="text-3xl font-bold text-slate-900 mb-8">{t('dashboard.title')}</h1>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Profile Info */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <div className="w-16 h-16 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-2xl font-bold mb-4">
+              {user.name.charAt(0)}
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center text-slate-600 text-sm gap-2">
+                 <Mail className="w-4 h-4 text-slate-400" />
+                 {user.email}
+              </div>
+              <div className="flex items-center text-slate-600 text-sm gap-2">
+                 <UserIcon className="w-4 h-4 text-slate-400" />
+                 {t('dashboard.role')}: <span className="capitalize font-semibold">{user.role}</span>
+              </div>
+              <div className="flex items-center text-slate-600 text-sm gap-2">
+                 <Shield className="w-4 h-4 text-emerald-500" />
+                 {t('dashboard.activeSecured')}
+              </div>
+            </div>
           </div>
-          <div className="flex gap-4">
-             <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-3 shadow-sm w-full sm:w-auto">
-                <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-lg shrink-0">
-                  {user.name.charAt(0)}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
-                  <p className="text-xs text-slate-500 truncate">{user.email}</p>
-                </div>
-             </div>
-          </div>
-       </div>
+        </div>
 
-       {myOrders.length === 0 ? (
-         <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-12 text-center text-slate-500">
-            <Package className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-            <h3 className="text-lg font-bold text-slate-900 mb-2">No orders yet</h3>
-            <p className="text-sm sm:text-base">You haven't purchased any licenses or accounts yet.</p>
-         </div>
-       ) : (
-         <div className="space-y-8 sm:space-y-12">
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2 mb-4 sm:mb-6">
-                <Key className="w-5 h-5 text-indigo-600 shrink-0" /> My Digital Library (Keys & Accounts)
+        {/* Orders List */}
+        <div className="lg:col-span-2 space-y-6">
+           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                <Package className="w-5 h-5 text-indigo-500" />
+                {t('dashboard.orderHistory')}
               </h2>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                {myOrders.map((order) => (
-                  order.keys && order.keys.length > 0 ? (
-                    order.keys.map((keyItem, idx) => (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        key={`${order.id}-${idx}`} 
-                        className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition"
-                      >
-                        <div className="bg-slate-50 border-b border-slate-100 p-3 sm:p-4 flex justify-between items-center">
-                           <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-widest">{keyItem.type}</p>
-                           <span className="text-[10px] sm:text-xs font-medium text-slate-400">Order: {order.id}</span>
+              {myOrders.length === 0 ? (
+                <div className="text-center py-12 bg-slate-50 border border-slate-100 border-dashed rounded-xl">
+                  <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-500 font-medium">{t('dashboard.noOrders')}</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {myOrders.map(order => (
+                    <div key={order.id} className="border border-slate-200 rounded-xl overflow-hidden">
+                      <div className="bg-slate-50 p-4 border-b border-slate-200 flex flex-wrap gap-4 justify-between items-center text-sm">
+                        <div>
+                          <p className="text-slate-500 font-medium">{t('dashboard.orderPlaced')}</p>
+                          <p className="font-bold text-slate-900">{new Date(order.date).toLocaleDateString()}</p>
                         </div>
-                        <div className="p-4 sm:p-5 flex flex-col gap-4">
-                           <h3 className="font-bold text-slate-900 text-sm sm:text-base">{keyItem.productName}</h3>
-                           
-                           <div className="bg-slate-900 text-slate-50 p-3 sm:p-4 rounded-xl relative flex justify-between items-center gap-2 group">
-                             <code className="font-mono text-xs sm:text-sm tracking-wide break-all block">
-                               {keyItem.value}
-                             </code>
-                             <button 
-                                onClick={() => handleCopy(keyItem.value)}
-                                className="shrink-0 p-1.5 sm:p-2 bg-white/10 hover:bg-white/20 rounded-lg text-slate-300 hover:text-white transition active:scale-95"
-                                title="Copy to clipboard"
-                             >
-                                {copiedKey === keyItem.value ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" /> : <Copy className="w-4 h-4 sm:w-5 sm:h-5" />}
-                             </button>
-                             <AnimatePresence>
-                               {copiedKey === keyItem.value && (
-                                <motion.div 
-                                  initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                                  className="absolute -top-8 right-0 bg-emerald-500 text-white text-[10px] py-1 px-2 rounded font-bold shadow-lg"
-                                >
-                                  Copied!
-                                </motion.div>
-                               )}
-                             </AnimatePresence>
-                           </div>
+                        <div>
+                          <p className="text-slate-500 font-medium">{t('common.total')}</p>
+                          <p className="font-bold text-slate-900">{(order.total || 0).toLocaleString()} {t('common.currency')}</p>
                         </div>
-                      </motion.div>
-                    ))
-                  ) : (
-                    order.method === 'WhatsApp' ? (
-                       <div key={order.id} className="bg-orange-50 border border-orange-200 rounded-2xl p-4 sm:p-6 shadow-sm flex flex-col sm:flex-row items-start gap-4">
-                          <MessageCircle className="w-6 h-6 text-orange-500 shrink-0 mt-1" />
-                          <div>
-                             <h3 className="font-bold text-orange-900 mb-1 text-sm sm:text-base">WhatsApp Order Processing</h3>
-                             <p className="text-xs sm:text-sm text-orange-800 leading-relaxed">Your order {order.id} is pending manual processing via WhatsApp. We will deliver the keys shortly via chat or email.</p>
+                        <div>
+                          <p className="text-slate-500 font-medium">{t('dashboard.orderId')}</p>
+                          <p className="font-bold text-slate-900">#{order.id}</p>
+                        </div>
+                        <div>
+                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                              order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
+                              order.status === 'Pending' ? 'bg-amber-100 text-amber-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {order.status === 'Completed' ? t('dashboard.completed') : 
+                               order.status === 'Pending' ? t('dashboard.pending') : t('dashboard.cancelled')}
+                            </span>
+                        </div>
+                      </div>
+                      
+                      <div className="p-4 space-y-4">
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex gap-4">
+                             <img src={item.product.imageUrl} alt={item.product.name} className="w-16 h-16 rounded-lg object-cover bg-slate-100" />
+                             <div>
+                                <h4 className="font-bold text-slate-900">{item.product.name}</h4>
+                                <p className="text-slate-500 text-sm">{t('cart.qty')}: {item.quantity} {item.selectedDuration && `(${item.selectedDuration.label})`}</p>
+                             </div>
                           </div>
-                       </div>
-                    ) : null
-                  )
-                ))}
-              </div>
-            </div>
+                        ))}
+                      </div>
 
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2 mb-4 sm:mb-6">
-                <Calendar className="w-5 h-5 text-indigo-600 shrink-0" /> Order History
-              </h2>
-
-              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                 <div className="overflow-x-auto">
-                   <table className="w-full text-left text-sm text-slate-500 min-w-[700px]">
-                      <thead className="text-xs text-slate-700 uppercase bg-slate-50 border-b border-slate-200 whitespace-nowrap">
-                         <tr>
-                            <th className="px-4 sm:px-6 py-4">Order ID</th>
-                            <th className="px-4 sm:px-6 py-4">Date</th>
-                            <th className="px-4 sm:px-6 py-4">Items</th>
-                            <th className="px-4 sm:px-6 py-4">Total</th>
-                            <th className="px-4 sm:px-6 py-4">Method</th>
-                            <th className="px-4 sm:px-6 py-4">Status</th>
-                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 whitespace-nowrap">
-                         {myOrders.map(order => (
-                            <tr key={order.id} className="hover:bg-slate-50 transition">
-                               <td className="px-4 sm:px-6 py-4 font-mono font-medium text-slate-900 text-xs sm:text-sm">{order.id}</td>
-                               <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm">{new Date(order.date).toLocaleDateString()}</td>
-                               <td className="px-4 sm:px-6 py-4">
-                                  {order.items.map(item => (
-                                     <div key={item.product.id} className="text-xs text-slate-700">
-                                        {item.quantity}x {item.product.name}
-                                     </div>
-                                  ))}
-                               </td>
-                               <td className="px-4 sm:px-6 py-4 font-bold text-slate-900 text-sm">${order.total.toFixed(2)}</td>
-                               <td className="px-4 sm:px-6 py-4 text-[10px] sm:text-xs font-semibold uppercase">{order.method}</td>
-                               <td className="px-4 sm:px-6 py-4">
-                                  <span className={`px-2.5 py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider rounded-full border ${getOrderStatusColor(order.status)}`}>
-                                    {order.status}
-                                  </span>
-                               </td>
-                            </tr>
-                         ))}
-                      </tbody>
-                   </table>
-                 </div>
-              </div>
-            </div>
-         </div>
-       )}
+                      {order.status === 'Completed' && order.keys && order.keys.length > 0 && (
+                        <div className="p-4 border-t border-slate-100 bg-emerald-50/50">
+                          <p className="font-bold text-emerald-800 text-sm mb-2">{t('dashboard.yourKeys')}</p>
+                          <div className="space-y-2">
+                            {order.keys.map((key, idx) => (
+                              <div key={idx} className="bg-white border border-emerald-100 p-3 rounded-lg font-mono text-sm text-emerald-700 break-all shadow-sm">
+                                <span className="font-bold text-xs text-emerald-500 uppercase block mb-1">{key.productName}</span>
+                                {key.value}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+           </div>
+        </div>
+      </div>
     </div>
   );
 }

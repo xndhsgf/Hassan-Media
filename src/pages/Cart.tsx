@@ -1,182 +1,208 @@
-import { Link, useNavigate } from 'react-router';
 import { useStore } from '../store/useStore';
-import { Trash2, ShieldCheck, Lock, ShoppingCart, MessageCircle, ArrowRight, CreditCard } from 'lucide-react';
+import { ShoppingCart, Trash2, ArrowRight, CreditCard, MessageCircle, ShieldCheck } from 'lucide-react';
+import { Link, useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { PaymentMethod } from '../data/mockData';
 
 export default function Cart() {
-  const { cart, removeFromCart, placeOrder, clearCart, whatsappNumber, user, paymentMethods } = useStore();
+  const { cart, removeFromCart, placeOrder, paymentMethods, whatsappNumber, user } = useStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
-  
-  const subtotalUsb = cart.reduce((sum, item) => sum + ((item.product.priceUsd || item.product.price) * item.quantity), 0);
-  const subtotalEgp = cart.reduce((sum, item) => sum + ((item.product.priceEgp || (item.product.price * 50)) * item.quantity), 0);
-  const tax = 0; // Tax free digital goods
-  
-  const totalUsd = subtotalUsb + tax;
-  const totalEgp = subtotalEgp + (tax * 50);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
 
-  const handleCheckout = () => {
-    if (!user) return navigate('/login');
-    if (!selectedMethod) return alert("Please select a payment method.");
-    setIsProcessing(true);
-    placeOrder('WhatsApp'); // Assuming manual flow saves it as Whatsapp or manual
+  const total = cart.reduce((sum, item) => {
+    const basePrice = item.selectedDuration ? item.selectedDuration.price : item.product.price;
+    const finalPrice = item.product.discountPercentage 
+      ? basePrice * (1 - item.product.discountPercentage / 100)
+      : basePrice;
+    return sum + (finalPrice * item.quantity);
+  }, 0);
+  const activeMethods = paymentMethods.filter(m => m.isActive);
 
-    let text = `Hello! I would like to order the following products:\n\n`;
-    cart.forEach(item => {
-      text += `- ${item.quantity}x ${item.product.name} (${Number(item.product.priceEgp || (item.product.price * 50)).toFixed(2)} EGP)\n`;
-    });
-    text += `\n*Total: ${totalEgp.toFixed(2)} EGP*\n\n`;
-    text += `Payment Method: ${selectedMethod.name}\n`;
-    text += `I have successfully transferred the amount. Please verify and send the products!`;
+  const handleCheckout = async (method: 'Auto' | 'WhatsApp') => {
+    if (!user) {
+       navigate('/login');
+       return;
+    }
+
+    await placeOrder(method);
     
-    setTimeout(() => {
-      setIsProcessing(false);
-      window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank');
-      navigate('/dashboard'); 
-    }, 1500);
+    if (method === 'WhatsApp') {
+       const selectedMethod = paymentMethods.find(m => m.id === selectedPaymentId);
+       const text = `${t('cart.whatsappMessageIntro')}\n\n` + 
+       cart.map(i => {
+         const basePrice = i.selectedDuration ? i.selectedDuration.price : i.product.price;
+         const itemPrice = i.product.discountPercentage ? basePrice * (1 - i.product.discountPercentage / 100) : basePrice;
+         return `- ${i.quantity}x ${i.product.name} ${i.selectedDuration ? `(${i.selectedDuration.label})` : ''} - ${ ((itemPrice * i.quantity) || 0).toLocaleString() } ${t('common.currency')}`;
+       }).join('\n') +
+       `\n\n${t('cart.whatsappMessageTotal')} ${(total || 0).toLocaleString()} ${t('common.currency')}` + 
+       (selectedMethod ? `\n${t('cart.whatsappMessagePayment')} ${selectedMethod.name}` : '');
+       
+       window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank');
+    }
+    
+    navigate('/dashboard');
   };
 
   if (cart.length === 0) {
     return (
-      <div className="w-full max-w-3xl mx-auto px-4 py-20 text-center">
-        <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <ShoppingCart className="w-10 h-10 text-slate-400" />
-        </div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Your cart is empty</h2>
-        <p className="text-slate-500 mb-8">Looks like you haven't added anything to your cart yet.</p>
-        <Link to="/store" className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition">
-          Continue Shopping
-        </Link>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+         <ShoppingCart className="w-20 h-20 text-slate-200 mx-auto mb-6" />
+         <h2 className="text-2xl font-bold text-slate-900 mb-2">{t('cart.empty')}</h2>
+         <p className="text-slate-500 mb-8 max-w-md mx-auto">{t('cart.emptyDesc')}</p>
+         <Link to="/store" className="inline-flex items-center justify-center px-8 py-3 font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-600/20">
+           {t('cart.continueShopping')}
+         </Link>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full overflow-hidden">
-      <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-6 sm:mb-8">Checkout</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-3xl font-bold text-slate-900 mb-8">{t('cart.title')}</h1>
 
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-        {/* Cart Items */}
-        <div className="flex-1 w-full min-w-0">
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden w-full">
-            <div className="p-4 sm:p-6 pb-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h2 className="font-semibold text-slate-900 text-sm sm:text-base">Items ({cart.length})</h2>
-              <button onClick={clearCart} className="text-[10px] sm:text-xs font-semibold text-slate-500 hover:text-red-500 uppercase tracking-widest">Clear All</button>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        <div className="lg:col-span-8 space-y-4">
+          {cart.map((item, idx) => (
+            <div key={`${item.product.id}-${idx}`} className="flex flex-col sm:flex-row gap-4 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm relative group pr-12">
+               <img src={item.product.imageUrl} alt={item.product.name} className="w-24 h-24 rounded-xl object-cover bg-slate-100 shrink-0" />
+               <div className="flex-1 min-w-0">
+                 <div className="flex justify-between items-start">
+                   <div>
+                     <h3 className="font-bold text-slate-900 line-clamp-1 pr-4">{item.product.name}</h3>
+                     <p className="text-sm text-slate-500 mt-1">{item.product.type}</p>
+                   </div>
+                 </div>
+                 {item.selectedDuration && (
+                   <div className="mt-2 text-xs font-semibold bg-indigo-50 text-indigo-700 px-2 py-1 rounded w-fit">
+                     {item.selectedDuration.label}
+                   </div>
+                 )}
+                 <div className="flex items-center gap-4 mt-3">
+                   <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
+                      <span className="px-3 text-sm font-semibold text-slate-700">{t('cart.qty')}: {item.quantity}</span>
+                   </div>
+                   <div className="font-bold text-slate-900">
+                     {(() => {
+                        const base = item.selectedDuration ? item.selectedDuration.price : item.product.price;
+                        const finalP = item.product.discountPercentage ? base * (1 - item.product.discountPercentage / 100) : base;
+                        return `${((finalP * item.quantity) || 0).toLocaleString()} ${t('common.currency')}`;
+                      })()}
+                   </div>
+                 </div>
+               </div>
+               <button 
+                 onClick={() => removeFromCart(item.product.id, item.selectedDuration?.id)}
+                 className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                 aria-label="Remove item"
+               >
+                 <Trash2 className="w-5 h-5" />
+               </button>
             </div>
-            <ul className="divide-y divide-slate-100">
-              <AnimatePresence>
-                {cart.map((item) => (
-                  <motion.li 
-                    layout
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    key={item.product.id} className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4"
-                  >
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-slate-100 shrink-0 relative">
-                       <span className="absolute top-1 left-1 bg-white/90 px-1 py-0.5 text-[8px] uppercase font-bold rounded shadow-sm z-10">{item.product.type}</span>
-                      <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0 w-full">
-                      <h3 className="font-bold text-slate-900 text-sm leading-snug mb-1 truncate">{item.product.name}</h3>
-                      <p className="text-xs text-slate-500">Qty: {item.quantity}</p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between w-full sm:w-auto gap-2 sm:gap-4 shrink-0">
-                      <div className="flex flex-col items-center sm:items-end justify-center w-full sm:w-auto gap-1 sm:gap-2 shrink-0">
-                        <span className="font-bold text-slate-900 text-sm sm:text-base">${((item.product.priceUsd || item.product.price) * item.quantity).toFixed(2)}</span>
-                        <span className="font-bold text-slate-500 text-xs">{((item.product.priceEgp || item.product.price * 50) * item.quantity).toFixed(2)} EGP</span>
-                      </div>
-                      <button 
-                        onClick={() => removeFromCart(item.product.id)}
-                        className="p-1.5 ml-2 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded-lg transition"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ul>
-          </div>
-          
-          <div className="mt-6 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 mb-6 lg:mb-0">
-             <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-indigo-600"/> Payment Methods</h2>
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {paymentMethods.map(method => (
-                  <label key={method.id} className={`border rounded-xl p-4 cursor-pointer flex flex-col gap-3 transition-colors ${selectedMethod?.id === method.id ? 'border-indigo-600 ring-1 ring-indigo-600 bg-indigo-50/50' : 'border-slate-200 hover:border-slate-300'}`}>
-                    <div className="flex justify-between items-center">
-                      <input 
-                        type="radio" 
-                        name="payment_method" 
-                        className="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-600"
-                        onChange={() => setSelectedMethod(method)}
-                        checked={selectedMethod?.id === method.id}
-                      />
-                      {method.imageUrl && <img src={method.imageUrl} alt={method.name} className="h-6 object-contain" />}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 leading-tight mb-1">{method.name}</h3>
-                      <p className="text-xs text-slate-500 font-medium">Account: <span className="text-slate-900">{method.accountNumber}</span></p>
-                    </div>
-                    {selectedMethod?.id === method.id && (
-                       <div className="bg-white border text-xs text-slate-600 border-indigo-100 p-3 rounded-lg mt-2">
-                         {method.instructions}
-                       </div>
-                    )}
-                  </label>
-                ))}
-                {paymentMethods.length === 0 && (
-                  <p className="col-span-full text-slate-500 text-sm">No payment methods available.</p>
-                )}
-             </div>
-          </div>
+          ))}
         </div>
 
-        {/* Order Summary */}
-        <div className="w-full lg:w-96 shrink-0">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 lg:sticky lg:top-24">
-            <h2 className="text-lg font-bold text-slate-900 mb-6">Order Summary</h2>
+        <div className="lg:col-span-4">
+          <div className="bg-slate-50 rounded-3xl p-6 border border-slate-200 sticky top-24">
+            <h2 className="text-xl font-bold text-slate-900 mb-6">{t('cart.orderSummary')}</h2>
             
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Subtotal (USD)</span>
-                <span className="font-medium text-slate-900">${subtotalUsb.toFixed(2)}</span>
+            <div className="space-y-4 mb-6 text-slate-600 border-b border-slate-200 pb-6">
+              <div className="flex justify-between">
+                <span>{t('cart.subtotal')} ({cart.length} {t('common.items')})</span>
+                <span className="font-semibold text-slate-900">{(total || 0).toLocaleString()} {t('common.currency')}</span>
               </div>
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Subtotal (EGP)</span>
-                <span className="font-medium text-slate-900">{subtotalEgp.toFixed(2)} EGP</span>
-              </div>
-              <div className="pt-4 border-t border-slate-100 flex justify-between items-end">
-                <span className="text-base font-bold text-slate-900">Total</span>
-                <div className="text-right">
-                  <span className="text-2xl sm:text-3xl font-black text-slate-900">{totalEgp.toFixed(2)}</span>
-                  <p className="text-[10px] sm:text-xs text-slate-500 font-medium">EGP</p>
-                </div>
+              <div className="flex justify-between">
+                <span>{t('cart.tax')}</span>
+                <span className="font-semibold text-emerald-600">Free</span>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <button 
-                onClick={handleCheckout}
-                disabled={isProcessing || !selectedMethod}
-                className="w-full flex items-center justify-center gap-2 py-3.5 sm:py-4 px-4 sm:px-6 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-colors disabled:opacity-75 disabled:cursor-not-allowed group text-sm sm:text-base"
-              >
-                {isProcessing ? (
-                  <span>Processing...</span>
-                ) : (
-                  <>
-                    I have transferred<ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-white transition shrink-0 ml-1" />
-                  </>
-                )}
-              </button>
-              {!selectedMethod && (
-                 <p className="text-xs text-red-500 text-center mt-1 font-medium">Please select a payment method</p>
-              )}
+            <div className="flex justify-between items-end mb-8">
+              <span className="font-bold text-slate-900">{t('cart.totalDue')}</span>
+              <span className="text-3xl font-bold text-indigo-600">{(total || 0).toLocaleString()} {t('common.currency')}</span>
             </div>
+
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 border-t border-slate-200 pt-6">
+               {!selectedPaymentId ? (
+                 <>
+                   <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide mb-4">{t('cart.selectPaymentMethod')}</h3>
+                   <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                     {activeMethods.map((m) => (
+                       <button 
+                         key={m.id} 
+                         onClick={() => setSelectedPaymentId(m.id)}
+                         className="w-full flex items-center justify-between bg-white border border-slate-200 hover:border-indigo-500 hover:shadow-md p-4 rounded-xl shadow-sm transition-all text-left"
+                       >
+                         <div className="flex items-center gap-4">
+                           {m.imageUrl ? (
+                             <img src={m.imageUrl} alt={m.name} className="w-12 h-12 rounded-lg object-cover bg-slate-50 border border-slate-100" />
+                           ) : (
+                             <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-lg flex items-center justify-center">
+                               <CreditCard className="w-6 h-6" />
+                             </div>
+                           )}
+                           <div>
+                             <p className="font-bold text-slate-900">{m.name}</p>
+                             <p className="text-xs text-slate-500">{t('cart.clickToViewDetails')}</p>
+                           </div>
+                         </div>
+                         <ArrowRight className="w-5 h-5 text-slate-400 rtl:-scale-x-100" />
+                       </button>
+                     ))}
+                     {activeMethods.length === 0 && (
+                       <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-xl border border-amber-100">No payment methods listed. Please contact support via WhatsApp.</p>
+                     )}
+                   </div>
+                 </>
+               ) : (
+                 <>
+                   {(() => {
+                      const selectedMethod = activeMethods.find(m => m.id === selectedPaymentId);
+                      if (!selectedMethod) return null;
+                      return (
+                        <div className="bg-white border text-center border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col items-center gap-4">
+                          {selectedMethod.imageUrl ? (
+                            <img src={selectedMethod.imageUrl} alt={selectedMethod.name} className="w-24 h-24 rounded-2xl object-cover bg-slate-50 border border-slate-100 mb-2" />
+                          ) : (
+                             <div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center mb-2">
+                               <CreditCard className="w-8 h-8" />
+                             </div>
+                          )}
+                          <div>
+                             <h3 className="font-bold text-lg text-slate-900">{selectedMethod.name}</h3>
+                             <p className="text-sm text-slate-500">{t('cart.pleaseTransfer')} <span className="font-bold text-slate-900 text-lg">{total.toLocaleString()} {t('common.currency')}</span> {t('cart.to')}</p>
+                          </div>
+                          <div className="bg-slate-50 border border-slate-200 w-full rounded-xl p-4">
+                             <p className="font-mono text-sm text-slate-700 break-all select-all whitespace-pre-wrap">{selectedMethod.details}</p>
+                          </div>
+                          <p className="text-xs text-slate-500 text-center">{t('cart.afterTransferClick')}</p>
+                        </div>
+                      )
+                   })()}
+                   <button 
+                    onClick={() => handleCheckout('WhatsApp')}
+                    className="w-full flex items-center justify-center gap-2 mt-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-sm shadow-emerald-500/20"
+                  >
+                    {t('cart.iHaveTransferred')}
+                    <MessageCircle className="w-5 h-5 rtl:-scale-x-100" />
+                  </button>
+                  <button onClick={() => setSelectedPaymentId(null)} className="w-full text-center text-sm font-semibold text-slate-500 hover:text-slate-700 py-2">
+                    {t('cart.changePaymentMethod')}
+                  </button>
+                 </>
+               )}
+            </div>
+
+            {!user && (
+               <p className="text-xs text-center text-amber-600 mt-4 bg-amber-50 p-2 rounded-lg font-medium">
+                 {t('product.mustLogin')}
+               </p>
+            )}
             
+            <div className="mt-6 flex items-start gap-2 text-xs text-slate-500">
+              <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-500" />
+              <p>{t('home.securePaymentsDesc')}</p>
+            </div>
           </div>
         </div>
       </div>

@@ -11,51 +11,18 @@ import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminBanners from './pages/admin/AdminBanners';
 import AdminPaymentMethods from './pages/admin/AdminPaymentMethods';
+import AdminSettings from './pages/admin/AdminSettings';
 import Login from './pages/Login';
 import { useEffect } from 'react';
 import { useStore } from './store/useStore';
-import { auth, db } from './lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
 
 export default function App() {
-  const { initFirebase, setUser } = useStore();
+  const { initFirebase } = useStore();
 
   useEffect(() => {
-    // Start Real-time Firestore Listeners
+    // Initialize mock data instead of real Firebase
     initFirebase();
-
-    // Listen strictly to Auth state (persistent login)
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-       if (user) {
-          try {
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            let role: 'user' | 'admin' = 'user';
-            
-            if (userDoc.exists()) {
-               role = userDoc.data().role;
-            } else if (user.email?.includes('admin')) { 
-               // Fallback mock admin role check from legacy auth if not yet inserted
-               role = 'admin';
-            }
-
-            setUser({
-               id: user.uid,
-               name: user.email?.split('@')[0] || 'User',
-               email: user.email || '',
-               role: role
-            });
-          } catch (e) {
-            console.error("Error fetching user role", e);
-            setUser(null);
-          }
-       } else {
-          setUser(null);
-       }
-    });
-
-    return () => unsubscribe();
-  }, [initFirebase, setUser]);
+  }, [initFirebase]);
 
   return (
     <BrowserRouter>
@@ -79,6 +46,7 @@ export default function App() {
           <Route path="orders" element={<AdminOrders />} />
           <Route path="banners" element={<AdminBanners />} />
           <Route path="payment-methods" element={<AdminPaymentMethods />} />
+          <Route path="settings" element={<AdminSettings />} />
           <Route path="*" element={<div className="p-8"><h2 className="text-xl font-bold">Coming Soon</h2><p className="text-slate-500 mt-2">This section of the admin panel is under construction.</p></div>} />
         </Route>
         

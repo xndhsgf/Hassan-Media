@@ -1,124 +1,136 @@
-import { useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { Image as ImageIcon, Trash2, Plus, Power, Link2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Image, Plus, Trash2, Edit2, X } from 'lucide-react';
+import { useState } from 'react';
+import { Banner } from '../../store/useStore';
 
 export default function AdminBanners() {
-  const { banners, addBanner, toggleBannerStatus, deleteBanner } = useStore();
-  
-  const [isAdding, setIsAdding] = useState(false);
-  const [newImage, setNewImage] = useState('');
-  const [newLink, setNewLink] = useState('');
+  const { banners, addBanner, updateBanner, deleteBanner, toggleBannerStatus } = useStore();
+  const [isEditing, setIsEditing] = useState<string | null>(null);
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newImage) return;
-    
-    addBanner({
-      imageUrl: newImage,
-      linkUrl: newLink,
-      isActive: true
-    });
-    
-    setIsAdding(false);
-    setNewImage('');
-    setNewLink('');
+  const [formData, setFormData] = useState<Partial<Banner>>({
+    imageUrl: '',
+    linkUrl: '',
+    isActive: true
+  });
+
+  const handleEdit = (banner: Banner) => {
+    setFormData(banner);
+    setIsEditing(banner.id);
+  };
+
+  const handleSave = () => {
+    if (isEditing === 'new') {
+      addBanner(formData as Banner);
+    } else if (isEditing) {
+      updateBanner(isEditing, formData);
+    }
+    setIsEditing(null);
   };
 
   return (
-    <div className="max-w-6xl mx-auto w-full">
-      <div className="flex justify-between items-end mb-8">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Promotional Banners</h1>
-          <p className="text-slate-500">Manage the hero section auto-animated banners on the homepage.</p>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <Image className="w-6 h-6 text-indigo-500" />
+            Home Banners
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">Manage the hero carousel banners on the homepage.</p>
         </div>
         <button 
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-medium transition"
+          onClick={() => {
+            setIsEditing('new');
+            setFormData({ imageUrl: '', linkUrl: '', isActive: true });
+          }}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-indigo-600/20"
         >
-          <Plus className="w-4 h-4" /> <span className="hidden sm:inline">Add Banner</span>
+          <Plus className="w-5 h-5" />
+          Add Banner
         </button>
       </div>
 
-      <AnimatePresence>
-        {isAdding && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-white rounded-2xl border border-slate-200 p-6 mb-8 overflow-hidden"
-          >
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-indigo-500" /> New Banner Configuration
-            </h3>
-            <form onSubmit={handleAdd} className="space-y-4">
-              <div>
-                 <label className="block text-sm font-medium text-slate-700 mb-1">Image URL (Responsive Auto-Crop)</label>
-                 <input 
-                   type="text" 
-                   value={newImage}
-                   onChange={e => setNewImage(e.target.value)}
-                   className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-                   placeholder="https://images.unsplash.com/photo-..."
-                   required
-                 />
-              </div>
-              <div>
-                 <label className="block text-sm font-medium text-slate-700 mb-1">Target Link (Optional)</label>
-                 <input 
-                   type="text" 
-                   value={newLink}
-                   onChange={e => setNewLink(e.target.value)}
-                   className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-                   placeholder="/store?cat=AI Tools"
-                 />
-              </div>
-              <div className="flex gap-3 justify-end pt-2">
-                 <button type="button" onClick={() => setIsAdding(false)} className="px-5 py-2 border border-slate-200 text-slate-600 rounded-xl font-medium hover:bg-slate-50 transition">Cancel</button>
-                 <button type="submit" className="px-5 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition">Save Banner</button>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {banners.map((banner) => (
-          <div key={banner.id} className={`bg-white border rounded-2xl overflow-hidden transition-all duration-300 ${banner.isActive ? 'border-slate-200 shadow-sm' : 'border-slate-200 opacity-60 grayscale'}`}>
-             <div className="aspect-[3/1] w-full relative bg-slate-100">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {banners.map(banner => (
+           <div key={banner.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
+             <div className="aspect-[21/9] bg-slate-100 relative">
                <img src={banner.imageUrl} alt="Banner" className="w-full h-full object-cover" />
-               <div className="absolute top-2 right-2 flex gap-1">
+               <div className="absolute top-4 right-4 flex gap-2">
                  <button 
-                   onClick={() => toggleBannerStatus(banner.id)}
-                   className={`p-1.5 rounded-lg border backdrop-blur-sm transition shadow-sm ${banner.isActive ? 'bg-emerald-500/90 text-white border-emerald-400' : 'bg-slate-900/80 text-white border-slate-700'}`}
-                   title={banner.isActive ? "Deactivate" : "Activate"}
+                   onClick={() => toggleBannerStatus(banner.id)} 
+                   className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-md ${banner.isActive ? 'bg-emerald-500/90 text-white' : 'bg-slate-900/80 text-white'}`}
                  >
-                   <Power className="w-4 h-4" />
-                 </button>
-                 <button 
-                    onClick={() => deleteBanner(banner.id)}
-                    className="p-1.5 rounded-lg border border-red-400 bg-red-500/90 text-white backdrop-blur-sm transition shadow-sm hover:bg-red-600"
-                    title="Delete"
-                 >
-                   <Trash2 className="w-4 h-4" />
+                   {banner.isActive ? 'Active' : 'Hidden'}
                  </button>
                </div>
+               <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                  <button onClick={() => handleEdit(banner)} className="p-3 bg-white text-indigo-600 rounded-xl hover:scale-110 transition-transform shadow-lg">
+                    <Edit2 className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => deleteBanner(banner.id)} className="p-3 bg-red-600 text-white rounded-xl hover:scale-110 transition-transform shadow-lg">
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+               </div>
              </div>
-             <div className="p-4 flex items-center gap-2 text-sm text-slate-500 bg-slate-50 border-t border-slate-100">
-                <Link2 className="w-4 h-4 shrink-0" />
-                <span className="truncate">{banner.linkUrl || 'No target link set'}</span>
+             <div className="p-4 bg-white flex justify-between items-center text-sm">
+                <span className="text-slate-500 font-medium truncate pr-4">Link: {banner.linkUrl || 'None'}</span>
              </div>
-          </div>
+           </div>
         ))}
-
-        {banners.length === 0 && !isAdding && (
-          <div className="col-span-full border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center text-slate-500 bg-slate-50/50">
-             <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-             <h3 className="text-lg font-bold text-slate-900 mb-1">No banners configured</h3>
-             <p className="text-sm">Upload promotional banners to display on the storefront hero section.</p>
-          </div>
-        )}
       </div>
+
+       {/* Edit/Add Modal */}
+       {isEditing && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white/90 backdrop-blur rounded-t-2xl">
+              <h2 className="text-xl font-bold text-slate-900">{isEditing === 'new' ? 'Add Banner' : 'Edit Banner'}</h2>
+              <button onClick={() => setIsEditing(null)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4 text-sm">
+              <div className="space-y-2">
+                <label className="font-semibold text-slate-700 block">Image URL</label>
+                <input 
+                  type="text" 
+                  value={formData.imageUrl || ''} 
+                  onChange={e => setFormData({...formData, imageUrl: e.target.value})} 
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" 
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="font-semibold text-slate-700 block">Link URL (Optional)</label>
+                <input 
+                  type="text" 
+                  value={formData.linkUrl || ''} 
+                  onChange={e => setFormData({...formData, linkUrl: e.target.value})} 
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" 
+                  placeholder="/store?cat=Software"
+                />
+              </div>
+              <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={formData.isActive}
+                  onChange={e => setFormData({...formData, isActive: e.target.checked})}
+                  className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                />
+                <div>
+                   <p className="font-semibold text-slate-900">Active</p>
+                   <p className="text-xs text-slate-500">Show this banner on the homepage</p>
+                </div>
+              </label>
+            </div>
+            
+            <div className="p-6 border-t border-slate-100 bg-slate-50 rounded-b-2xl flex justify-end gap-3">
+              <button onClick={() => setIsEditing(null)} className="px-4 py-2 font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors">Cancel</button>
+              <button onClick={handleSave} className="px-6 py-2 font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors shadow-sm shadow-indigo-600/20">Save Banner</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

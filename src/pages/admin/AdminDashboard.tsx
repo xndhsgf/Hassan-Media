@@ -1,116 +1,127 @@
+import { BarChart3, ShoppingBag, Users, DollarSign, Activity, Settings, Plus } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import { 
-  DollarSign, ShoppingCart, Users, PackageOpen, 
-  ArrowUpRight, ArrowDownRight, TrendingUp 
-} from 'lucide-react';
+import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminDashboard() {
-  const { user, allOrders, products } = useStore();
-  
-  if (user?.role !== 'admin') {
-    return <div className="p-8 text-red-500">Access Denied. Admins only.</div>;
-  }
+  const { allOrders, products, paymentMethods } = useStore();
+  const { t } = useTranslation();
 
-  const totalRevenue = allOrders.filter(o => o.status === 'Completed').reduce((sum, o) => sum + o.total, 0);
+  const totalRevenue = allOrders.reduce((sum, o) => sum + o.total, 0);
+  const totalOrders = allOrders.length;
+  const activeProducts = products.length;
 
   const stats = [
-    { name: 'Total Revenue', value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, change: '+14.5%', trend: 'up' },
-    { name: 'Orders', value: allOrders.length.toString(), icon: ShoppingCart, change: '+5.2%', trend: 'up' },
-    { name: 'Total Products', value: products.length.toString(), icon: PackageOpen, change: 'Active', trend: 'up' },
-    { name: 'Pending Approvals', value: allOrders.filter(o => o.method === 'WhatsApp' && o.status === 'Pending').length.toString(), icon: TrendingUp, change: 'Action Req', trend: 'down' },
+    { name: t('admin.totalRevenue'), value: `${(totalRevenue || 0).toLocaleString()} ${t('common.currency')}`, icon: DollarSign, color: 'bg-emerald-500' },
+    { name: t('admin.totalOrders'), value: (totalOrders || 0).toString(), icon: ShoppingBag, color: 'bg-blue-500' },
+    { name: t('admin.activeProducts'), value: (activeProducts || 0).toString(), icon: Activity, color: 'bg-indigo-500' },
+    { name: t('admin.paymentMethods'), value: (paymentMethods?.length || 0).toString(), icon: Settings, color: 'bg-purple-500' },
   ];
 
   return (
-    <div className="max-w-6xl mx-auto w-full">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard Overview</h1>
-        <p className="text-slate-500 text-sm mt-1">Welcome back, here's your store's performance today.</p>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">{t('admin.dashboard')}</h1>
+          <p className="text-sm text-slate-500 mt-1">{t('admin.welcome')}</p>
+        </div>
+        <Link 
+          to="/admin/products" 
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-indigo-600/20"
+        >
+          <Plus className="w-4 h-4" />
+          {t('admin.addProduct')}
+        </Link>
       </div>
-      
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-        {stats.map((stat) => {
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, idx) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.name} className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm">
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100">
-                  <Icon className="w-5 h-5 text-slate-700" />
-                </div>
-                <span className={`text-[10px] sm:text-xs font-bold px-2 py-1 rounded w-fit flex items-center gap-1 ${
-                  stat.trend === 'up' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'
-                }`}>
-                  {stat.trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                  {stat.change}
-                </span>
+            <div key={idx} className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0 ${stat.color} shadow-lg shadow-${stat.color.split('-')[1]}-500/30`}>
+                <Icon className="w-6 h-6" />
               </div>
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-slate-500 mb-1">{stat.name}</p>
-                <h3 className="text-xl sm:text-2xl font-black text-slate-900">{stat.value}</h3>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-500 tracking-wide uppercase truncate">{stat.name}</p>
+                <p className="text-2xl font-bold text-slate-900 mt-1 truncate">{stat.value}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Orders Mock */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col w-full">
-          <div className="p-5 sm:p-6 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="font-bold text-slate-900">Recent Transactions</h3>
-          </div>
-          <div className="p-0 overflow-x-auto w-full">
-            <table className="w-full text-left text-sm whitespace-nowrap min-w-[500px]">
-               <thead className="bg-slate-50 border-b border-slate-100 text-slate-500">
-                  <tr>
-                    <th className="px-4 sm:px-6 py-4 font-medium">Order ID</th>
-                    <th className="px-4 sm:px-6 py-4 font-medium">Customer Email</th>
-                    <th className="px-4 sm:px-6 py-4 font-medium">Amount</th>
-                    <th className="px-4 sm:px-6 py-4 font-medium">Status</th>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-indigo-500" />
+            {t('admin.recentOrders')}
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="text-slate-500 border-b border-slate-100">
+                <tr>
+                  <th className="pb-3 font-semibold">{t('admin.orderId')}</th>
+                  <th className="pb-3 font-semibold">{t('common.total')}</th>
+                  <th className="pb-3 font-semibold">{t('admin.status')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {allOrders.slice(0, 5).map((order) => (
+                  <tr key={order.id} className="hover:bg-slate-50">
+                    <td className="py-3 font-medium text-slate-900">{order.id}</td>
+                    <td className="py-3 text-slate-600">{(order.total || 0).toLocaleString()} {t('common.currency')}</td>
+                    <td className="py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                        order.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
+                        order.status === 'Pending' ? 'bg-amber-100 text-amber-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {order.status === 'Completed' ? t('dashboard.completed') : 
+                         order.status === 'Pending' ? t('dashboard.pending') : t('dashboard.cancelled')}
+                      </span>
+                    </td>
                   </tr>
-               </thead>
-               <tbody className="divide-y divide-slate-100">
-                  {allOrders.length === 0 && (
-                    <tr><td colSpan={4} className="px-4 sm:px-6 py-8 text-center text-slate-400">No transactions recorded yet</td></tr>
-                  )}
-                  {allOrders.slice(0, 5).map(o => (
-                    <tr key={o.id} className="hover:bg-slate-50/50 transition">
-                       <td className="px-4 sm:px-6 py-4 font-mono font-medium text-slate-600 text-xs sm:text-sm">{o.id}</td>
-                       <td className="px-4 sm:px-6 py-4 text-slate-900 text-xs sm:text-sm">{o.userEmail}</td>
-                       <td className="px-4 sm:px-6 py-4 font-medium text-slate-900 text-sm">${o.total.toFixed(2)}</td>
-                       <td className="px-4 sm:px-6 py-4">
-                         <span className={`px-2 py-1 text-[10px] sm:text-xs font-semibold rounded-full ${o.status==='Completed'?'bg-emerald-100 text-emerald-700':o.status==='Pending'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700'}`}>
-                           {o.status}
-                         </span>
-                       </td>
-                    </tr>
-                  ))}
-               </tbody>
+                ))}
+                {allOrders.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="py-8 text-center text-slate-500 italic">{t('admin.noOrders')}</td>
+                  </tr>
+                )}
+              </tbody>
             </table>
           </div>
         </div>
 
-        {/* Top Products */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col w-full">
-          <div className="p-5 sm:p-6 border-b border-slate-100">
-            <h3 className="font-bold text-slate-900">Active Products Overview</h3>
-          </div>
-          <div className="p-4 sm:p-6 flex-1 flex flex-col gap-4 sm:gap-6 max-h-[400px] overflow-y-auto">
-             {products.length === 0 && <p className="text-sm text-slate-500">No products assigned yet.</p>}
-             {products.map((p, i) => (
-                <div key={p.id} className="flex items-center gap-3 sm:gap-4">
-                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 rounded-lg overflow-hidden shrink-0 hidden sm:block">
-                      <img src={p.image} className="w-full h-full object-cover" alt="" />
-                   </div>
-                   <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold text-slate-900 truncate">{p.name}</h4>
-                      <p className="text-[10px] sm:text-xs text-slate-500 truncate">{p.category}</p>
-                   </div>
-                   <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-slate-900">${Number(p.price).toFixed(2)}</p>
-                   </div>
-                </div>
-             ))}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+           <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <ShoppingBag className="w-5 h-5 text-indigo-500" />
+            {t('admin.productInventory')}
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="text-slate-500 border-b border-slate-100">
+                <tr>
+                  <th className="pb-3 font-semibold">{t('admin.product')}</th>
+                  <th className="pb-3 font-semibold">{t('admin.type')}</th>
+                  <th className="pb-3 font-semibold">{t('admin.stock')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {products.slice(0, 5).map((product) => (
+                  <tr key={product.id} className="hover:bg-slate-50">
+                    <td className="py-3 font-medium text-slate-900">{product.name}</td>
+                    <td className="py-3 text-slate-600">{product.type}</td>
+                    <td className="py-3 text-slate-600">{product.stock}</td>
+                  </tr>
+                ))}
+                {products.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="py-8 text-center text-slate-500 italic">{t('admin.noProducts')}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

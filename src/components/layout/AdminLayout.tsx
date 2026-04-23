@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 
 export default function AdminLayout() {
   const location = useLocation();
-  const { logout, user } = useStore();
+  const { logout, user, siteName, siteLogo } = useStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Close sidebar on route change on mobile
@@ -25,6 +25,7 @@ export default function AdminLayout() {
     { name: 'Banners', path: '/admin/banners', icon: Image },
     { name: 'Users', path: '/admin/users', icon: Users },
     { name: 'Promotions', path: '/admin/promos', icon: Tag },
+    { name: 'Settings', path: '/admin/settings', icon: Settings },
   ];
 
   return (
@@ -44,10 +45,14 @@ export default function AdminLayout() {
       )}>
         <div className="flex items-center justify-between px-6 py-8">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-indigo-500 flex items-center justify-center text-white shrink-0">
-              <Key className="w-4 h-4" />
-            </div>
-            <span className="text-white font-bold text-xl tracking-wide">KeyMaster</span>
+            {siteLogo ? (
+              <img src={siteLogo} alt={siteName} className="h-8 w-auto object-contain" />
+            ) : (
+              <div className="w-8 h-8 rounded bg-indigo-500 flex items-center justify-center text-white shrink-0">
+                <Key className="w-4 h-4" />
+              </div>
+            )}
+            <span className="text-white font-bold text-xl tracking-wide">{siteName}</span>
           </div>
           <button 
             onClick={() => setIsMobileMenuOpen(false)}

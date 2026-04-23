@@ -1,19 +1,30 @@
 import { Link, Outlet, useLocation } from 'react-router';
 import { useStore } from '../../store/useStore';
 import { 
-  ShoppingCart, Menu, UserCircle, Search, Key, LayoutDashboard, ShieldCheck, X
+  ShoppingCart, Menu, UserCircle, Search, Key, LayoutDashboard, ShieldCheck, X, Globe
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '../../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import WhatsAppWidget from '../WhatsAppWidget';
+import { useTranslation } from 'react-i18next';
 
 export default function MainLayout() {
-  const { cart, user, logout } = useStore();
+  const { cart, user, logout, siteName, siteLogo } = useStore();
+  const { t, i18n } = useTranslation();
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
+
+  const toggleLanguage = () => {
+    i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
+  };
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -35,23 +46,27 @@ export default function MainLayout() {
   }, [isMobileMenuOpen]);
 
   const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Store', path: '/store' },
-    { name: 'Categories', path: '/store?categories=true' },
-    { name: 'Contact', path: '/contact' },
+    { name: t('nav.home'), path: '/' },
+    { name: t('nav.store'), path: '/store' },
+    { name: t('nav.categories'), path: '/store?categories=true' },
+    { name: t('nav.contact'), path: '/contact' },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
+    <div className={`min-h-screen bg-slate-50 flex flex-col ${i18n.language === 'ar' ? 'font-arabic' : 'font-sans'} text-slate-900 selection:bg-indigo-100 selection:text-indigo-900`}>
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             
             <Link to="/" className="flex items-center gap-2 flex-shrink-0 z-50 relative">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold shadow-sm shadow-indigo-600/20">
-                <Key className="w-5 h-5" />
-              </div>
-              <span className="font-bold text-xl tracking-tight text-slate-900">KeyMaster</span>
+              {siteLogo ? (
+                <img src={siteLogo} alt={siteName} className="h-8 w-auto object-contain" />
+              ) : (
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold shadow-sm shadow-indigo-600/20">
+                  <Key className="w-5 h-5" />
+                </div>
+              )}
+              <span className="font-bold text-xl tracking-tight text-slate-900">{siteName}</span>
             </Link>
 
             <nav className="hidden md:flex gap-8">
@@ -70,6 +85,10 @@ export default function MainLayout() {
             </nav>
 
             <div className="flex items-center gap-3 sm:gap-4 z-50 relative">
+              <button onClick={toggleLanguage} className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors flex font-bold text-sm items-center gap-2">
+                 <Globe className="w-5 h-5" />
+                 <span className="hidden sm:inline">{i18n.language === 'ar' ? 'EN' : 'عربي'}</span>
+              </button>
               <Link to="/cart" className="relative text-slate-600 hover:text-indigo-600 transition-colors flex items-center p-2 rounded-full hover:bg-slate-100">
                 <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                 {cartItemsCount > 0 && (
@@ -92,13 +111,13 @@ export default function MainLayout() {
               ) : (
                 <div className="hidden sm:flex items-center gap-3">
                   <Link to="/login" className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
-                    Login
+                    {t('nav.login')}
                   </Link>
                   <Link 
                     to="/register" 
                     className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-slate-900 rounded-xl hover:bg-indigo-600 transition duration-300 ease-in-out shadow-md shadow-slate-900/10"
                   >
-                    Register
+                    {t('nav.register')}
                   </Link>
                 </div>
               )}
@@ -142,8 +161,8 @@ export default function MainLayout() {
                 
                 {!user ? (
                    <div className="flex flex-col gap-3 px-2">
-                    <Link to="/login" className="flex items-center justify-center w-full py-3.5 rounded-xl text-base font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">Login to Account</Link>
-                    <Link to="/register" className="flex items-center justify-center w-full py-3.5 rounded-xl text-base font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20">Create New Account</Link>
+                    <Link to="/login" className="flex items-center justify-center w-full py-3.5 rounded-xl text-base font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">{t('nav.login')}</Link>
+                    <Link to="/register" className="flex items-center justify-center w-full py-3.5 rounded-xl text-base font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20">{t('nav.register')}</Link>
                    </div>
                 ) : (
                   <div className="flex flex-col gap-2">
@@ -157,10 +176,10 @@ export default function MainLayout() {
                     </div>
                     <Link to={user.role === 'admin' ? "/admin" : "/dashboard"} className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">
                       <LayoutDashboard className="w-5 h-5 shrink-0"/>
-                      {user.role === 'admin' ? 'Admin Panel' : 'My Dashboard'}
+                      {user.role === 'admin' ? t('nav.adminLogin') : t('nav.dashboard')}
                     </Link>
                     <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold text-red-600 hover:bg-red-50 transition-colors text-left">
-                      Sign Out
+                      {t('nav.signOut')}
                     </button>
                   </div>
                 )}
@@ -183,58 +202,62 @@ export default function MainLayout() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
             <div className="col-span-1 md:col-span-1">
               <Link to="/" className="flex items-center gap-2 mb-4 w-fit">
-                <div className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center text-white font-bold">
-                  <Key className="w-3 h-3" />
-                </div>
-                <span className="font-bold text-lg tracking-tight text-slate-900">KeyMaster</span>
+                {siteLogo ? (
+                  <img src={siteLogo} alt={siteName} className="h-6 w-auto object-contain" />
+                ) : (
+                  <div className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center text-white font-bold">
+                    <Key className="w-3 h-3" />
+                  </div>
+                )}
+                <span className="font-bold text-lg tracking-tight text-slate-900">{siteName}</span>
               </Link>
               <p className="text-sm text-slate-500 mb-6 max-w-sm">
-                Your trusted source for genuine software licenses, premium accounts, and instant digital deliveries.
+                {t('footer.desc')}
               </p>
               <div className="flex flex-wrap gap-2">
-                <div className="h-8 px-3 rounded border border-slate-200 flex items-center text-xs font-semibold text-slate-500 bg-slate-50">STRIPE</div>
-                <div className="h-8 px-3 rounded border border-slate-200 flex items-center text-xs font-semibold text-slate-500 bg-slate-50">PAYPAL</div>
-                <div className="h-8 px-3 rounded border border-slate-200 flex items-center text-xs font-semibold text-slate-500 bg-slate-50">SECURE</div>
+                <div className="h-8 px-3 rounded border border-slate-200 flex items-center text-xs font-semibold text-slate-500 bg-slate-50">{t('footer.stripe')}</div>
+                <div className="h-8 px-3 rounded border border-slate-200 flex items-center text-xs font-semibold text-slate-500 bg-slate-50">{t('footer.paypal')}</div>
+                <div className="h-8 px-3 rounded border border-slate-200 flex items-center text-xs font-semibold text-slate-500 bg-slate-50">{t('footer.secure')}</div>
               </div>
             </div>
             
             <div>
-              <h3 className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">Store</h3>
+              <h3 className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">{t('footer.store')}</h3>
               <ul className="space-y-3 text-sm text-slate-500">
-                <li><Link to="/store?cat=AI Tools" className="hover:text-indigo-600 transition font-medium">AI Tools</Link></li>
+                <li><Link to="/store?cat=AI Tools" className="hover:text-indigo-600 transition font-medium">{t('home.aiTools')}</Link></li>
                 <li><Link to="/store?cat=Design Tools" className="hover:text-indigo-600 transition font-medium">Design Software</Link></li>
                 <li><Link to="/store?cat=Operating Systems" className="hover:text-indigo-600 transition font-medium">Operating Systems</Link></li>
                 <li><Link to="/store?cat=Security" className="hover:text-indigo-600 transition font-medium">Security</Link></li>
                 <li><Link to="/store?cat=Productivity" className="hover:text-indigo-600 transition font-medium">Productivity</Link></li>
               </ul>
             </div>
-
+            
             <div>
-              <h3 className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">Support</h3>
+              <h3 className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">{t('footer.support')}</h3>
               <ul className="space-y-3 text-sm text-slate-500">
-                <li><Link to="/faq" className="hover:text-indigo-600 transition font-medium">FAQ</Link></li>
-                <li><Link to="/contact" className="hover:text-indigo-600 transition font-medium">Contact Us</Link></li>
-                <li><Link to="/refund" className="hover:text-indigo-600 transition font-medium">Refund Policy</Link></li>
-                <li><Link to="/terms" className="hover:text-indigo-600 transition font-medium">Terms of Service</Link></li>
+                <li><Link to="/faq" className="hover:text-indigo-600 transition font-medium">{t('footer.faq')}</Link></li>
+                <li><Link to="/contact" className="hover:text-indigo-600 transition font-medium">{t('nav.contact')}</Link></li>
+                <li><Link to="/refund" className="hover:text-indigo-600 transition font-medium">{t('footer.refund')}</Link></li>
+                <li><Link to="/terms" className="hover:text-indigo-600 transition font-medium">{t('footer.terms')}</Link></li>
               </ul>
             </div>
 
             <div>
-              <h3 className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">Members</h3>
+              <h3 className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">{t('footer.members')}</h3>
               <ul className="space-y-3 text-sm text-slate-500">
-                <li><Link to="/dashboard" className="hover:text-indigo-600 transition font-medium">My Account</Link></li>
-                <li><Link to="/dashboard" className="hover:text-indigo-600 transition font-medium">Order History</Link></li>
-                <li><Link to="/affiliate" className="hover:text-indigo-600 transition font-medium">Affiliate Program</Link></li>
+                <li><Link to="/dashboard" className="hover:text-indigo-600 transition font-medium">{t('nav.myAccount')}</Link></li>
+                <li><Link to="/dashboard" className="hover:text-indigo-600 transition font-medium">{t('footer.orderHistory')}</Link></li>
+                <li><Link to="/affiliate" className="hover:text-indigo-600 transition font-medium">{t('footer.affiliate')}</Link></li>
               </ul>
             </div>
           </div>
           
           <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
             <p className="text-sm font-medium text-slate-400">
-              © {new Date().getFullYear()} KeyMaster SaaS. All rights reserved.
+              © {new Date().getFullYear()} {siteName}. {t('footer.rights')}
             </p>
             <div className="flex items-center gap-4 text-sm font-medium text-slate-500">
-               <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-500"/> 256-bit SSL Encryption</span>
+               <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-500"/> {t('footer.ssl')}</span>
             </div>
           </div>
         </div>
