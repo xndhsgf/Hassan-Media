@@ -267,7 +267,6 @@ export const useStore = create<AppState>((set, get) => ({
           id: item.product.id,
           name: item.product.name,
           price: item.product.price,
-          priceEGP: item.product.priceEGP,
           type: item.product.type,
           imageUrl: item.product.imageUrl
         },

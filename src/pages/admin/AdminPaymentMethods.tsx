@@ -116,6 +116,7 @@ export default function AdminPaymentMethods() {
               </div>
               <div className="space-y-2">
                 <label className="font-semibold text-slate-700 block">Image URL (Optional)</label>
+                <p className="text-[10px] text-amber-600 font-bold uppercase animate-pulse">Recommended: 256 x 256 px (Square)</p>
                 <input 
                   type="text" 
                   value={formData.imageUrl || ''} 

@@ -1,11 +1,25 @@
 import { useStore } from '../store/useStore';
-import { Package, User as UserIcon, Mail, Shield } from 'lucide-react';
+import { Package, User as UserIcon, Mail, Shield, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function Dashboard() {
-  const { user, allOrders } = useStore();
+  const { user, allOrders, whatsappNumber } = useStore();
   const { t } = useTranslation();
   const myOrders = allOrders.filter(o => o.userId === user?.id);
+
+  const handleContactWhatsApp = (order: any) => {
+    const text = `${t('cart.whatsappMessageIntro')}\n\n` + 
+    `Order ID: #${order.id}\n` +
+    `Date: ${new Date(order.date).toLocaleDateString()}\n\n` +
+    order.items.map((i: any) => {
+      return `- ${i.quantity}x ${i.product.name} ${i.selectedDuration ? `(${i.selectedDuration.label})` : ''}`;
+    }).join('\n') +
+    `\n\nTotal: ${(order.total || 0).toLocaleString()} ${t('common.currency')}\n` +
+    `Status: ${order.status}`;
+    
+    const cleanNumber = whatsappNumber.replace(/\D/g, '');
+    window.open(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(text)}`, '_blank');
+  };
 
   if (!user) return null;
 
@@ -79,6 +93,13 @@ export default function Dashboard() {
                                order.status === 'Pending' ? t('dashboard.pending') : t('dashboard.cancelled')}
                             </span>
                         </div>
+                        <button 
+                          onClick={() => handleContactWhatsApp(order)}
+                          className="flex items-center gap-1 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-100 transition-colors border border-emerald-100"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          {t('common.contactWhatsApp')}
+                        </button>
                       </div>
                       
                       <div className="p-4 space-y-4">

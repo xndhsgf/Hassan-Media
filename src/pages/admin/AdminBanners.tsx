@@ -92,6 +92,7 @@ export default function AdminBanners() {
             <div className="p-6 space-y-4 text-sm">
               <div className="space-y-2">
                 <label className="font-semibold text-slate-700 block">Image URL</label>
+                <p className="text-[10px] text-amber-600 font-bold uppercase animate-pulse">Recommended: 1920 x 600 px (Wide)</p>
                 <input 
                   type="text" 
                   value={formData.imageUrl || ''} 

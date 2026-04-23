@@ -4,9 +4,12 @@ import { useStore } from '../store/useStore';
 export default function WhatsAppWidget() {
   const { whatsappNumber } = useStore();
   
+  // Clean the number for the WhatsApp link (remove spaces, plus, dashes, etc.)
+  const cleanNumber = whatsappNumber.replace(/\D/g, '');
+  
   return (
     <a 
-      href={`https://wa.me/${whatsappNumber}`}
+      href={`https://wa.me/${cleanNumber}`}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 hover:bg-[#1ebe57] transition-all duration-300 flex items-center justify-center"

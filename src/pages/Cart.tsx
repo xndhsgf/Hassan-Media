@@ -38,7 +38,8 @@ export default function Cart() {
        `\n\n${t('cart.whatsappMessageTotal')} ${(total || 0).toLocaleString()} ${t('common.currency')}` + 
        (selectedMethod ? `\n${t('cart.whatsappMessagePayment')} ${selectedMethod.name}` : '');
        
-       window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank');
+       const cleanNumber = whatsappNumber.replace(/\D/g, '');
+       window.open(`https://wa.me/${cleanNumber}?text=${encodeURIComponent(text)}`, '_blank');
     }
     
     navigate('/dashboard');

@@ -72,6 +72,7 @@ export default function AdminSettings() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700">Logo URL</label>
+                <p className="text-[10px] text-amber-600 font-bold uppercase animate-pulse">Recommended: 512 x 512 px or 400 x 100 px</p>
                 <div className="relative">
                   <input
                     type="url"

@@ -151,6 +151,7 @@ const resources = {
         login: "Login",
         register: "Register",
         total: "Total",
+        contactWhatsApp: "Contact via WhatsApp",
       }
     }
   },
@@ -308,6 +309,7 @@ const resources = {
         login: "تسجيل الدخول",
         register: "إنشاء حساب",
         total: "الإجمالي",
+        contactWhatsApp: "تواصل عبر الواتساب",
       }
     }
   }
