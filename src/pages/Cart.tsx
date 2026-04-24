@@ -176,6 +176,13 @@ export default function Cart() {
                           <div className="bg-slate-50 border border-slate-200 w-full rounded-xl p-4">
                              <p className="font-mono text-sm text-slate-700 break-all select-all whitespace-pre-wrap">{selectedMethod.details}</p>
                           </div>
+
+                          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 w-full">
+                            <p className="text-[11px] sm:text-xs text-amber-700 font-bold leading-relaxed px-1">
+                              {t('cart.paymentInstructions')}
+                            </p>
+                          </div>
+
                           <p className="text-xs text-slate-500 text-center">{t('cart.afterTransferClick')}</p>
                         </div>
                       )

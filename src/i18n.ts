@@ -98,6 +98,7 @@ const resources = {
         whatsappMessageIntro: "Hello, I would like to order:",
         whatsappMessageTotal: "Total:",
         whatsappMessagePayment: "Payment Method:",
+        paymentInstructions: "You must complete the payment first, then contact the administrator via WhatsApp to receive your activation code.",
       },
       footer: {
         desc: "Your trusted source for genuine software licenses, premium accounts, and instant digital deliveries.",
@@ -266,6 +267,7 @@ const resources = {
         whatsappMessageTotal: "الإجمالي:",
         whatsappMessagePayment: "طريقة الدفع المختارة:",
         totalDue: "الإجمالي المطلوب",
+        paymentInstructions: "يجب عليك إتمام عملية الدفع أولاً، ثم التواصل مع المسؤول عبر الواتساب لإرسال إثبات الدفع واستلام كود التفعيل الخاص بك.",
       },
       footer: {
         desc: "مصدرك الموثوق لتراخيص البرامج الأصلية، الحسابات المميزة، والتسليم الرقمي الفوري.",
