@@ -48,6 +48,7 @@ export interface Banner {
   imageUrl: string;
   linkUrl?: string;
   isActive: boolean;
+  position?: 'top' | 'middle';
 }
 
 export interface Announcement {

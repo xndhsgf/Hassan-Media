@@ -10,25 +10,26 @@ import AnnouncementBar from '../components/AnnouncementBar';
 export default function Home() {
   const { products, banners, paymentMethods } = useStore();
   const { t } = useTranslation();
-  const activeBanners = banners.filter(b => b.isActive);
+  const topBanners = banners.filter(b => b.isActive && (b.position === 'top' || !b.position));
+  const middleBanners = banners.filter(b => b.isActive && b.position === 'middle');
   const activeMethods = paymentMethods ? paymentMethods.filter(m => m.isActive) : [];
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    if (activeBanners.length <= 1) return;
+    if (topBanners.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % activeBanners.length);
+      setCurrentSlide((prev) => (prev + 1) % topBanners.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [activeBanners.length]);
+  }, [topBanners.length]);
 
   return (
     <div className="bg-slate-50 min-h-screen">
       {/* Hero Banner Carousel */}
       <section className="relative bg-slate-900 overflow-hidden h-[35vh] sm:h-[60vh] min-h-[250px]">
-        {activeBanners.length > 0 ? (
+        {topBanners.length > 0 ? (
           <>
-             {activeBanners.map((banner, index) => (
+             {topBanners.map((banner, index) => (
                 <motion.div
                   key={banner.id}
                   initial={{ opacity: 0 }}
@@ -37,12 +38,18 @@ export default function Home() {
                   className="absolute inset-0"
                   style={{ pointerEvents: currentSlide === index ? 'auto' : 'none' }}
                 >
-                  <img src={banner.imageUrl} alt="Offer" className="w-full h-full object-cover lg:object-fill" />
+                  {banner.linkUrl ? (
+                    <Link to={banner.linkUrl} className="block w-full h-full">
+                      <img src={banner.imageUrl} alt="Offer" className="w-full h-full object-cover lg:object-fill" />
+                    </Link>
+                  ) : (
+                    <img src={banner.imageUrl} alt="Offer" className="w-full h-full object-cover lg:object-fill" />
+                  )}
                 </motion.div>
              ))}
-             {activeBanners.length > 1 && (
+             {topBanners.length > 1 && (
                <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
-                 {activeBanners.map((_, idx) => (
+                 {topBanners.map((_, idx) => (
                    <button 
                      key={idx}
                      onClick={() => setCurrentSlide(idx)}
@@ -63,7 +70,7 @@ export default function Home() {
       <AnnouncementBar />
 
       {/* Featured Products */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-right" dir="rtl">
         <div className="flex items-center justify-between mb-8 sm:mb-10">
           <div>
             <h2 className="font-display text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
@@ -71,8 +78,8 @@ export default function Home() {
               {t('home.dailyDiscounts')}
             </h2>
           </div>
-          <Link to="/store" className="text-xs sm:text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1 bg-indigo-50 sm:bg-transparent px-3 py-1.5 sm:p-0 rounded-full">
-            {t('home.viewAll')} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+          <Link to="/store" className="text-xs sm:text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1 bg-indigo-50 sm:bg-transparent px-3 py-1.5 sm:p-0 rounded-full font-arabic">
+            {t('home.viewAll')} <ArrowRight className="w-4 h-4 rotate-180" />
           </Link>
         </div>
 
@@ -82,6 +89,33 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* Middle Banners Section */}
+      {middleBanners.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 gap-6">
+            {middleBanners.map((banner) => (
+              <div key={banner.id} className="w-full rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200 group relative">
+                {banner.linkUrl ? (
+                  <Link to={banner.linkUrl} className="block w-full">
+                    <img 
+                      src={banner.imageUrl} 
+                      alt="Special Offer" 
+                      className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105" 
+                    />
+                  </Link>
+                ) : (
+                  <img 
+                    src={banner.imageUrl} 
+                    alt="Special Offer" 
+                    className="w-full h-auto object-cover" 
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

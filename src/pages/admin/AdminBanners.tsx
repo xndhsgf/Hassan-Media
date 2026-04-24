@@ -10,11 +10,12 @@ export default function AdminBanners() {
   const [formData, setFormData] = useState<Partial<Banner>>({
     imageUrl: '',
     linkUrl: '',
-    isActive: true
+    isActive: true,
+    position: 'top'
   });
 
   const handleEdit = (banner: Banner) => {
-    setFormData(banner);
+    setFormData({ ...banner, position: banner.position || 'top' });
     setIsEditing(banner.id);
   };
 
@@ -40,7 +41,7 @@ export default function AdminBanners() {
         <button 
           onClick={() => {
             setIsEditing('new');
-            setFormData({ imageUrl: '', linkUrl: '', isActive: true });
+            setFormData({ imageUrl: '', linkUrl: '', isActive: true, position: 'top' });
           }}
           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-indigo-600/20"
         >
@@ -54,13 +55,16 @@ export default function AdminBanners() {
            <div key={banner.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
              <div className="aspect-[21/9] bg-slate-100 relative">
                <img src={banner.imageUrl} alt="Banner" className="w-full h-full object-cover" />
-               <div className="absolute top-4 right-4 flex gap-2">
+               <div className="absolute top-4 right-4 flex flex-col gap-2">
                  <button 
                    onClick={() => toggleBannerStatus(banner.id)} 
                    className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-md ${banner.isActive ? 'bg-emerald-500/90 text-white' : 'bg-slate-900/80 text-white'}`}
                  >
                    {banner.isActive ? 'Active' : 'Hidden'}
                  </button>
+                 <span className="px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-md bg-white/90 text-slate-800 self-end">
+                   {banner.position === 'middle' ? 'Middle' : 'Top'}
+                 </span>
                </div>
                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
                   <button onClick={() => handleEdit(banner)} className="p-3 bg-white text-indigo-600 rounded-xl hover:scale-110 transition-transform shadow-lg">
@@ -113,6 +117,17 @@ export default function AdminBanners() {
                   className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none" 
                   placeholder="/store?cat=Software"
                 />
+              </div>
+               <div className="space-y-2">
+                <label className="font-semibold text-slate-700 block">Banner Position (مكان البنر)</label>
+                <select 
+                  value={formData.position || 'top'} 
+                  onChange={e => setFormData({...formData, position: e.target.value as any})} 
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none bg-white"
+                >
+                  <option value="top">Top (Hero Slider) - أعلى الموقع</option>
+                  <option value="middle">Middle (After Products) - وسط الموقع</option>
+                </select>
               </div>
               <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
                 <input 
