@@ -12,7 +12,8 @@ export default function Home() {
   const { t } = useTranslation();
   const topBanners = banners.filter(b => b.isActive && (b.position === 'top' || !b.position));
   const middleBanners = banners.filter(b => b.isActive && b.position === 'middle');
-  const showMiddleAsSlider = middleBanners.length > 1 && middleBanners.some(b => b.showAsSlider);
+  const middleSliderBanners = middleBanners.filter(b => b.showAsSlider);
+  const middleStaticBanners = middleBanners.filter(b => !b.showAsSlider);
 
   const activeMethods = paymentMethods ? paymentMethods.filter(m => m.isActive) : [];
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -27,12 +28,12 @@ export default function Home() {
   }, [topBanners.length]);
 
   useEffect(() => {
-    if (!showMiddleAsSlider) return;
+    if (middleSliderBanners.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentMiddleSlide((prev) => (prev + 1) % middleBanners.length);
-    }, 2000); // Faster cycle as per "every second" request (using 2s for readability, 1s might be too fast but I can adjust)
+      setCurrentMiddleSlide((prev) => (prev + 1) % middleSliderBanners.length);
+    }, 2000); // 2 seconds cycle for middle slider
     return () => clearInterval(interval);
-  }, [showMiddleAsSlider, middleBanners.length]);
+  }, [middleSliderBanners.length]);
 
   return (
     <div className="bg-slate-50 min-h-screen">
@@ -104,15 +105,16 @@ export default function Home() {
       {/* Middle Banners Section */}
       {middleBanners.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className={`${showMiddleAsSlider ? 'relative aspect-[21/9] sm:aspect-[25/9] overflow-hidden rounded-[2.5rem] shadow-xl' : 'grid grid-cols-1 gap-6'}`}>
-            {showMiddleAsSlider ? (
-              <>
-                {middleBanners.map((banner, index) => (
+          <div className="flex flex-col gap-6">
+            {/* Slider Group */}
+            {middleSliderBanners.length > 0 && (
+              <div className="relative aspect-[21/9] sm:aspect-[25/9] overflow-hidden rounded-[2.5rem] shadow-xl shadow-slate-200">
+                {middleSliderBanners.map((banner, index) => (
                   <motion.div
                     key={banner.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: currentMiddleSlide === index ? 1 : 0 }}
-                    transition={{ duration: 0.6 }}
+                    transition={{ duration: 0.8 }}
                     className="absolute inset-0"
                     style={{ pointerEvents: currentMiddleSlide === index ? 'auto' : 'none' }}
                   >
@@ -133,10 +135,10 @@ export default function Home() {
                     )}
                   </motion.div>
                 ))}
-                {/* Dots for middle slider if it has many items */}
-                {middleBanners.length > 1 && (
+                {/* Dots for middle slider */}
+                {middleSliderBanners.length > 1 && (
                   <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-10">
-                    {middleBanners.map((_, idx) => (
+                    {middleSliderBanners.map((_, idx) => (
                       <button 
                         key={idx}
                         onClick={() => setCurrentMiddleSlide(idx)}
@@ -145,28 +147,29 @@ export default function Home() {
                     ))}
                   </div>
                 )}
-              </>
-            ) : (
-              middleBanners.map((banner) => (
-                <div key={banner.id} className="w-full rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200 group relative">
-                  {banner.linkUrl ? (
-                    <Link to={banner.linkUrl} className="block w-full">
-                      <img 
-                        src={banner.imageUrl} 
-                        alt="Special Offer" 
-                        className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105" 
-                      />
-                    </Link>
-                  ) : (
+              </div>
+            )}
+
+            {/* Static Group */}
+            {middleStaticBanners.map((banner) => (
+              <div key={banner.id} className="w-full rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200 group relative">
+                {banner.linkUrl ? (
+                  <Link to={banner.linkUrl} className="block w-full">
                     <img 
                       src={banner.imageUrl} 
                       alt="Special Offer" 
-                      className="w-full h-auto object-cover" 
+                      className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105" 
                     />
-                  )}
-                </div>
-              ))
-            )}
+                  </Link>
+                ) : (
+                  <img 
+                    src={banner.imageUrl} 
+                    alt="Special Offer" 
+                    className="w-full h-auto object-cover" 
+                  />
+                )}
+              </div>
+            ))}
           </div>
         </section>
       )}
