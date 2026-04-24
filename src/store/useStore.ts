@@ -49,6 +49,7 @@ export interface Banner {
   linkUrl?: string;
   isActive: boolean;
   position?: 'top' | 'middle';
+  showAsSlider?: boolean;
 }
 
 export interface Announcement {

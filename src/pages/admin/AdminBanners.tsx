@@ -11,11 +11,12 @@ export default function AdminBanners() {
     imageUrl: '',
     linkUrl: '',
     isActive: true,
-    position: 'top'
+    position: 'top',
+    showAsSlider: false
   });
 
   const handleEdit = (banner: Banner) => {
-    setFormData({ ...banner, position: banner.position || 'top' });
+    setFormData({ ...banner, position: banner.position || 'top', showAsSlider: !!banner.showAsSlider });
     setIsEditing(banner.id);
   };
 
@@ -41,7 +42,7 @@ export default function AdminBanners() {
         <button 
           onClick={() => {
             setIsEditing('new');
-            setFormData({ imageUrl: '', linkUrl: '', isActive: true, position: 'top' });
+            setFormData({ imageUrl: '', linkUrl: '', isActive: true, position: 'top', showAsSlider: false });
           }}
           className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-indigo-600/20"
         >
@@ -63,7 +64,7 @@ export default function AdminBanners() {
                    {banner.isActive ? 'Active' : 'Hidden'}
                  </button>
                  <span className="px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-md bg-white/90 text-slate-800 self-end">
-                   {banner.position === 'middle' ? 'Middle' : 'Top'}
+                   {banner.position === 'middle' ? (banner.showAsSlider ? 'Middle (Slider)' : 'Middle') : 'Top'}
                  </span>
                </div>
                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
@@ -129,6 +130,21 @@ export default function AdminBanners() {
                   <option value="middle">Middle (After Products) - وسط الموقع</option>
                 </select>
               </div>
+              
+              {formData.position === 'middle' && (
+                <label className="flex items-center gap-3 p-3 border border-indigo-100 bg-indigo-50/30 rounded-xl cursor-pointer hover:bg-indigo-50 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    checked={formData.showAsSlider}
+                    onChange={e => setFormData({...formData, showAsSlider: e.target.checked})}
+                    className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300"
+                  />
+                  <div>
+                    <p className="font-semibold text-indigo-900 leading-none">Slider Mode (وضع العرض المتحرك)</p>
+                    <p className="text-[10px] text-indigo-500 mt-1">If enabled, multiple middle banners will cycle automatically like the top bar.</p>
+                  </div>
+                </label>
+              )}
               <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
                 <input 
                   type="checkbox" 

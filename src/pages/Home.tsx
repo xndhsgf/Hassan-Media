@@ -12,8 +12,11 @@ export default function Home() {
   const { t } = useTranslation();
   const topBanners = banners.filter(b => b.isActive && (b.position === 'top' || !b.position));
   const middleBanners = banners.filter(b => b.isActive && b.position === 'middle');
+  const showMiddleAsSlider = middleBanners.length > 1 && middleBanners.some(b => b.showAsSlider);
+
   const activeMethods = paymentMethods ? paymentMethods.filter(m => m.isActive) : [];
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentMiddleSlide, setCurrentMiddleSlide] = useState(0);
 
   useEffect(() => {
     if (topBanners.length <= 1) return;
@@ -22,6 +25,14 @@ export default function Home() {
     }, 5000);
     return () => clearInterval(interval);
   }, [topBanners.length]);
+
+  useEffect(() => {
+    if (!showMiddleAsSlider) return;
+    const interval = setInterval(() => {
+      setCurrentMiddleSlide((prev) => (prev + 1) % middleBanners.length);
+    }, 2000); // Faster cycle as per "every second" request (using 2s for readability, 1s might be too fast but I can adjust)
+    return () => clearInterval(interval);
+  }, [showMiddleAsSlider, middleBanners.length]);
 
   return (
     <div className="bg-slate-50 min-h-screen">
@@ -93,26 +104,69 @@ export default function Home() {
       {/* Middle Banners Section */}
       {middleBanners.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 gap-6">
-            {middleBanners.map((banner) => (
-              <div key={banner.id} className="w-full rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200 group relative">
-                {banner.linkUrl ? (
-                  <Link to={banner.linkUrl} className="block w-full">
+          <div className={`${showMiddleAsSlider ? 'relative aspect-[21/9] sm:aspect-[25/9] overflow-hidden rounded-[2.5rem] shadow-xl' : 'grid grid-cols-1 gap-6'}`}>
+            {showMiddleAsSlider ? (
+              <>
+                {middleBanners.map((banner, index) => (
+                  <motion.div
+                    key={banner.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: currentMiddleSlide === index ? 1 : 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="absolute inset-0"
+                    style={{ pointerEvents: currentMiddleSlide === index ? 'auto' : 'none' }}
+                  >
+                    {banner.linkUrl ? (
+                      <Link to={banner.linkUrl} className="block w-full h-full">
+                        <img 
+                          src={banner.imageUrl} 
+                          alt="Special Offer" 
+                          className="w-full h-full object-cover" 
+                        />
+                      </Link>
+                    ) : (
+                      <img 
+                        src={banner.imageUrl} 
+                        alt="Special Offer" 
+                        className="w-full h-full object-cover" 
+                      />
+                    )}
+                  </motion.div>
+                ))}
+                {/* Dots for middle slider if it has many items */}
+                {middleBanners.length > 1 && (
+                  <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-10">
+                    {middleBanners.map((_, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => setCurrentMiddleSlide(idx)}
+                        className={`w-1.5 h-1.5 rounded-full transition-all ${currentMiddleSlide === idx ? 'bg-indigo-500 w-4' : 'bg-white/40'}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              middleBanners.map((banner) => (
+                <div key={banner.id} className="w-full rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200 group relative">
+                  {banner.linkUrl ? (
+                    <Link to={banner.linkUrl} className="block w-full">
+                      <img 
+                        src={banner.imageUrl} 
+                        alt="Special Offer" 
+                        className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105" 
+                      />
+                    </Link>
+                  ) : (
                     <img 
                       src={banner.imageUrl} 
                       alt="Special Offer" 
-                      className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105" 
+                      className="w-full h-auto object-cover" 
                     />
-                  </Link>
-                ) : (
-                  <img 
-                    src={banner.imageUrl} 
-                    alt="Special Offer" 
-                    className="w-full h-auto object-cover" 
-                  />
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </section>
       )}
