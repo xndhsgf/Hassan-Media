@@ -102,6 +102,7 @@ interface AppState {
   updateProduct: (id: string, data: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
+  clearStatistics: () => Promise<void>;
   updateWhatsAppNumber: (num: string) => Promise<void>;
   
   // Banner functions
@@ -423,6 +424,24 @@ export const useStore = create<AppState>((set, get) => ({
 
   updateOrderStatus: async (orderId, status) => {
     await updateDoc(doc(db, 'orders', orderId), { status });
+  },
+
+  clearStatistics: async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'orders'));
+      const deletePromises = snapshot.docs.map(docSnap => deleteDoc(doc(db, 'orders', docSnap.id)));
+      await Promise.all(deletePromises);
+
+      const promoSnapshot = await getDocs(collection(db, 'globalUsedPromos'));
+      const deletePromoPromises = promoSnapshot.docs.map(docSnap => deleteDoc(doc(db, 'globalUsedPromos', docSnap.id)));
+      await Promise.all(deletePromoPromises);
+
+      const usersSnapshot = await getDocs(collection(db, 'users'));
+      const updateUserPromises = usersSnapshot.docs.map(docSnap => updateDoc(doc(db, 'users', docSnap.id), { usedPromoCodes: [] }));
+      await Promise.all(updateUserPromises);
+    } catch (error) {
+      console.error('Failed to clear statistics:', error);
+    }
   },
 
   updateWhatsAppNumber: async (num) => {

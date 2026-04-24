@@ -1,11 +1,26 @@
-import { BarChart3, ShoppingBag, Users, DollarSign, Activity, Settings, Plus } from 'lucide-react';
+import { BarChart3, ShoppingBag, Users, DollarSign, Activity, Settings, Plus, Trash2 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
 
 export default function AdminDashboard() {
-  const { allOrders, products, paymentMethods } = useStore();
+  const { allOrders, products, paymentMethods, clearStatistics } = useStore();
   const { t } = useTranslation();
+  const [isClearing, setIsClearing] = useState(false);
+
+  const handleClearStatistics = async () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع الإحصائيات ومعلومات الشراء بشكل نهائي؟')) {
+      setIsClearing(true);
+      try {
+        await clearStatistics();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsClearing(false);
+      }
+    }
+  };
 
   const totalRevenue = allOrders.reduce((sum, o) => sum + o.total, 0);
   const totalOrders = allOrders.length;
@@ -25,13 +40,23 @@ export default function AdminDashboard() {
           <h1 className="text-2xl font-bold text-slate-900">{t('admin.dashboard')}</h1>
           <p className="text-sm text-slate-500 mt-1">{t('admin.welcome')}</p>
         </div>
-        <Link 
-          to="/admin/products" 
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-indigo-600/20"
-        >
-          <Plus className="w-4 h-4" />
-          {t('admin.addProduct')}
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleClearStatistics}
+            disabled={isClearing}
+            className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold transition-colors border border-red-200"
+          >
+            <Trash2 className="w-4 h-4" />
+            {isClearing ? 'جاري الحذف...' : 'حذف الإحصائيات'}
+          </button>
+          <Link 
+            to="/admin/products" 
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-indigo-600/20"
+          >
+            <Plus className="w-4 h-4" />
+            {t('admin.addProduct')}
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
