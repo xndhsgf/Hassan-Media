@@ -1,9 +1,9 @@
 import { useStore } from '../store/useStore';
-import { Package, User as UserIcon, Mail, Shield, MessageCircle } from 'lucide-react';
+import { Package, User as UserIcon, Mail, Shield, MessageCircle, LogOut, Gift } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function Dashboard() {
-  const { user, allOrders, whatsappNumber } = useStore();
+  const { user, allOrders, whatsappNumber, logout } = useStore();
   const { t } = useTranslation();
   const myOrders = allOrders.filter(o => o.userId === user?.id);
 
@@ -50,6 +50,40 @@ export default function Dashboard() {
                  {t('dashboard.activeSecured')}
               </div>
             </div>
+            
+            <button 
+              onClick={() => logout()}
+              className="mt-8 w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-red-100 text-red-600 font-bold hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+              {t('nav.signOut')}
+            </button>
+          </div>
+
+          {/* Used Coupons */}
+          <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-xl shadow-slate-200/40">
+            <h3 className="font-display text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
+              <Gift className="w-5 h-5 text-pink-500" />
+               Used Coupons
+            </h3>
+            {user.usedPromoCodes && user.usedPromoCodes.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {user.usedPromoCodes.map((codeId, idx) => {
+                  const promo = useStore.getState().promoCodes.find(p => p.id === codeId);
+                  const displayCode = promo?.code || (codeId.startsWith('GIFT-') ? codeId : 'PROMO');
+                  return (
+                    <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold text-slate-500">
+                      <Shield className="w-3 h-3 text-slate-400" />
+                      {displayCode}
+                    </span>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-slate-400 text-xs font-bold bg-slate-50 p-4 rounded-xl text-center border border-slate-100 border-dashed">
+                No coupons used yet
+              </p>
+            )}
           </div>
         </div>
 

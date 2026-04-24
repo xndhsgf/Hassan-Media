@@ -12,8 +12,46 @@ export default function Home() {
   const { t } = useTranslation();
   const topBanners = banners.filter(b => b.isActive && (b.position === 'top' || !b.position));
   const middleBanners = banners.filter(b => b.isActive && b.position === 'middle');
-  const middleSliderBanners = middleBanners.filter(b => b.showAsSlider);
-  const middleStaticBanners = middleBanners.filter(b => !b.showAsSlider);
+  const gridBanners = middleBanners.filter(b => (b.afterProductCount ?? 0) > 0);
+  const fixedMiddleBanners = middleBanners.filter(b => !(b.afterProductCount ?? 0));
+  
+  const middleSliderBanners = fixedMiddleBanners.filter(b => b.showAsSlider);
+  const middleStaticBanners = fixedMiddleBanners.filter(b => !b.showAsSlider);
+
+  const featuredProducts = products.slice(0, 12); // Show more products for better grid experience
+
+  const renderGridItems = () => {
+    const items: React.ReactNode[] = [];
+    let productsCount = 0;
+
+    // Filter and sort banners that belong in the grid
+    const sortedGridBanners = [...gridBanners].sort((a, b) => (a.afterProductCount || 0) - (b.afterProductCount || 0));
+
+    featuredProducts.forEach((product, idx) => {
+      items.push(<ProductCard key={product.id} product={product} />);
+      productsCount++;
+
+      // Check if any banners should be injected after this product count
+      const activeBanners = sortedGridBanners.filter(b => b.afterProductCount === productsCount);
+      activeBanners.forEach(banner => {
+        items.push(
+          <div key={`banner-gap-${banner.id}`} className="col-span-2 lg:col-span-4 my-4">
+            <div className="w-full rounded-[2rem] overflow-hidden shadow-xl shadow-slate-200/50 group">
+              {banner.linkUrl ? (
+                <Link to={banner.linkUrl} className="block w-full">
+                  <img src={banner.imageUrl} alt="Promo" className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105" />
+                </Link>
+              ) : (
+                <img src={banner.imageUrl} alt="Promo" className="w-full h-auto object-cover" />
+              )}
+            </div>
+          </div>
+        );
+      });
+    });
+
+    return items;
+  };
 
   const activeMethods = paymentMethods ? paymentMethods.filter(m => m.isActive) : [];
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -96,9 +134,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
-          {products.slice(0, 4).map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {renderGridItems()}
         </div>
       </section>
 

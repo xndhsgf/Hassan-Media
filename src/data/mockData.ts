@@ -17,6 +17,16 @@ export interface Product {
   stock: number;
   durationOptions?: ProductDurationOption[];
   discountPercentage?: number;
+  isOffer?: boolean;
+}
+export interface PromoCode {
+  id: string;
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  targetProductId?: string;
+  isActive: boolean;
+  usageCount: number;
 }
 export interface PaymentMethod {
   id: string;

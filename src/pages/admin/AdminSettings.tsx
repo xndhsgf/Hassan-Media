@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { Save, Phone, Globe, Image as ImageIcon, CheckCircle, AlertCircle } from 'lucide-react';
+import { Save, Phone, Globe, Image as ImageIcon, CheckCircle, AlertCircle, Gift } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function AdminSettings() {
-  const { siteName, siteLogo, whatsappNumber, updateSettings } = useStore();
+  const { siteName, siteLogo, whatsappNumber, welcomeGiftEnabled, welcomeGiftDiscount, updateSettings } = useStore();
   const [formData, setFormData] = useState({
     siteName,
     siteLogo,
     whatsappNumber,
+    welcomeGiftEnabled,
+    welcomeGiftDiscount,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -95,6 +97,55 @@ export default function AdminSettings() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Promotions Section */}
+          <div className="p-6 sm:p-8">
+            <h2 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <Gift className="w-5 h-5 text-pink-500" />
+              Promotions & Marketing
+            </h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-pink-100 text-pink-600 rounded-xl">
+                    <Gift className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900">Welcome Gift (هدايا ترحيبية)</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Show a high-quality gift opening animation for new users with a promo code.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, welcomeGiftEnabled: !formData.welcomeGiftEnabled })}
+                  className={`w-14 h-8 rounded-full transition-colors relative flex-shrink-0 ${formData.welcomeGiftEnabled ? 'bg-pink-500' : 'bg-slate-300'}`}
+                >
+                  <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all shadow-sm ${formData.welcomeGiftEnabled ? 'left-7' : 'left-1'}`} />
+                </button>
+              </div>
+
+              {formData.welcomeGiftEnabled && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3"
+                >
+                  <label className="text-sm font-bold text-slate-700">Gift Discount Percentage (%)</label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={formData.welcomeGiftDiscount}
+                      onChange={(e) => setFormData({ ...formData, welcomeGiftDiscount: parseInt(e.target.value) })}
+                      className="w-32 px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                    <span className="text-sm text-slate-500 font-medium">This discount will be applied to the randomly generated codes.</span>
+                  </div>
+                </motion.div>
+              )}
+            </div>
           </div>
 
           {/* Contact Section */}

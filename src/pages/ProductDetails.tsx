@@ -1,21 +1,27 @@
 import { useParams, Link, useNavigate } from 'react-router';
 import { useStore } from '../store/useStore';
-import { ShoppingCart, Star, CheckCircle, ShieldCheck, Zap, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Star, CheckCircle, ShieldCheck, Zap, ArrowLeft, Share2, Gift, Copy, Check, MessageCircle } from 'lucide-react';
 import { useState, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function ProductDetails() {
   const { id } = useParams();
-  const { products, addToCart, reviews, addReview, user } = useStore();
+  const { products, addToCart, reviews, addReview, user, promoCodes } = useStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
   
   const product = products.find(p => p.id === id);
   const productReviews = reviews.filter(r => r.productId === id);
   
+  // Find a specific promo code for this product to show as a "referral reward"
+  const referralPromo = promoCodes.find(p => p.isActive && p.targetProductId === id);
+  
   const [selectedDuration, setSelectedDuration] = useState(product?.durationOptions?.[0] || null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+  const [hasShared, setHasShared] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (!product) {
     return (
@@ -25,6 +31,50 @@ export default function ProductDetails() {
       </div>
     );
   }
+
+  const handleShare = async () => {
+    const shareUrl = referralPromo 
+      ? `${window.location.origin}${window.location.pathname}?ref=${referralPromo.code}`
+      : window.location.href;
+
+    const shareData = {
+      title: product.name,
+      text: `Check out this amazing product: ${product.name}!`,
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        setHasShared(true);
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        setHasShared(true);
+        setTimeout(() => setHasShared(false), 5000);
+      }
+    } catch (err) {
+      console.log('Error sharing:', err);
+    }
+  };
+
+  const handleWhatsAppShare = () => {
+    const shareUrl = referralPromo 
+      ? `${window.location.origin}${window.location.pathname}?ref=${referralPromo.code}`
+      : window.location.href;
+    
+    const text = `🔥 فـرصـة لا تـفـوت! خصم خـاص لـك عـلى: ${product.name}\n\nتفضل بزيارة الرابط واحصل على كود خصم ترحيبي عـند الـدخـول 🎁\n\n${shareUrl}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
+    setHasShared(true);
+  };
+
+  const copyPromo = () => {
+    if (referralPromo) {
+      navigator.clipboard.writeText(referralPromo.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const handleAddToCart = () => {
     addToCart(product, selectedDuration || undefined);
@@ -157,6 +207,73 @@ export default function ProductDetails() {
                </div>
             </div>
           </div>
+
+          {/* Referral Reward Section */}
+          {referralPromo && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-indigo-600/20"
+            >
+              <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                <Gift className="w-32 h-32" />
+              </div>
+              
+              <div className="relative z-10">
+                <h3 className="text-xl font-black mb-2 flex items-center gap-2">
+                  <Share2 className="w-5 h-5 text-indigo-300" />
+                  ادعُ صديق واحصل على خصم مكافأة!
+                </h3>
+                <p className="text-indigo-100 text-sm mb-6 leading-relaxed">
+                  شارك هذا المنتج مع أصدقائك، وبمجرد المشاركة ستظهر لك مكافأة خاصة لهذا المنتج.
+                </p>
+
+                {!hasShared ? (
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button 
+                      onClick={handleWhatsAppShare}
+                      className="flex-1 bg-[#25D366] text-white py-3 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-[#1da851] transition-colors shadow-lg active:scale-[0.98]"
+                    >
+                      <MessageCircle className="w-5 h-5 fill-white" />
+                      مشاركة عبر واتساب
+                    </button>
+                    <button 
+                      onClick={handleShare}
+                      className="flex-1 bg-white text-indigo-600 py-3 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors shadow-lg active:scale-[0.98]"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      مشاركة الرابط
+                    </button>
+                  </div>
+                ) : (
+                  <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <p className="text-[10px] font-bold text-indigo-200 uppercase mb-1">كود الخصم الخاص بك:</p>
+                        <p className="text-2xl font-black tracking-widest">{referralPromo.code}</p>
+                      </div>
+                      <button 
+                        onClick={copyPromo}
+                        className="bg-white text-indigo-600 p-3 rounded-xl shadow-lg active:scale-90 transition-all"
+                      >
+                        {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2">
+                      <Gift className="w-3 h-3 text-emerald-400" />
+                      <span className="text-[10px] font-bold text-emerald-400 uppercase">
+                        مبارك! تم تفعيل المكافأة لهذا المنتج
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
 

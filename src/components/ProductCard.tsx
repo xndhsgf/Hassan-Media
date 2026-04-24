@@ -83,6 +83,13 @@ export default function ProductCard({ product }: ProductCardProps) {
               {product.discountPercentage}% OFF
             </div>
           )}
+
+          {/* Offer Badge */}
+          {product.isOffer && (
+            <div className="absolute top-4 left-4 sm:top-5 sm:left-5 bg-emerald-500 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-200/50 z-10 animate-pulse">
+              HOT OFFER
+            </div>
+          )}
         </div>
       </Link>
 

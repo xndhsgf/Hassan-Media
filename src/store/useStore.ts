@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Product, ProductType, PaymentMethod, Review, ProductDurationOption } from '../data/mockData';
+import { Product, ProductType, PaymentMethod, Review, ProductDurationOption, PromoCode } from '../data/mockData';
 import { db, auth } from '../lib/firebase';
 import { 
   collection, doc, setDoc, getDocs, onSnapshot, 
@@ -41,6 +41,7 @@ export interface User {
   name: string;
   email: string;
   role: 'user' | 'admin';
+  usedPromoCodes?: string[];
 }
 
 export interface Banner {
@@ -50,6 +51,8 @@ export interface Banner {
   isActive: boolean;
   position?: 'top' | 'middle';
   showAsSlider?: boolean;
+  positionIndex?: number;
+  afterProductCount?: number;
 }
 
 export interface Announcement {
@@ -67,10 +70,13 @@ interface AppState {
   banners: Banner[];
   announcements: Announcement[];
   paymentMethods: PaymentMethod[];
+  promoCodes: PromoCode[];
   reviews: Review[];
   wishlist: string[];
   siteName: string;
   siteLogo: string;
+  welcomeGiftEnabled: boolean;
+  welcomeGiftDiscount: number;
   isInitialized: boolean;
   
   // Real-time Init
@@ -81,7 +87,7 @@ interface AppState {
   toggleWishlist: (productId: string) => Promise<void>;
 
   // Settings functions
-  updateSettings: (data: { siteName?: string; siteLogo?: string; whatsappNumber?: string }) => Promise<void>;
+  updateSettings: (data: { siteName?: string; siteLogo?: string; whatsappNumber?: string; welcomeGiftEnabled?: boolean; welcomeGiftDiscount?: number }) => Promise<void>;
 
   addToCart: (product: Product, selectedDuration?: ProductDurationOption) => void;
   removeFromCart: (productId: string, durationId?: string) => void;
@@ -89,7 +95,7 @@ interface AppState {
   login: (email: string, pass: string) => Promise<void>;
   register: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
-  placeOrder: (method: 'Auto' | 'WhatsApp') => Promise<void>;
+  placeOrder: (method: 'Auto' | 'WhatsApp', promoId?: string) => Promise<void>;
   
   // Admin functions
   addProduct: (product: Product) => Promise<void>;
@@ -118,6 +124,12 @@ interface AppState {
   // Reviews functions
   addReview: (review: Omit<Review, 'id' | 'date'>) => Promise<void>;
   deleteReview: (id: string) => Promise<void>;
+  
+  // Promotion/PromoCode functions
+  addPromoCode: (promo: Omit<PromoCode, 'id' | 'usageCount'>) => Promise<void>;
+  updatePromoCode: (id: string, data: Partial<PromoCode>) => Promise<void>;
+  deletePromoCode: (id: string) => Promise<void>;
+  applyPromoCode: (code: string) => Promise<PromoCode | null>;
 }
 
 const generateMockDelivery = (type: ProductType) => {
@@ -135,10 +147,13 @@ export const useStore = create<AppState>((set, get) => ({
   banners: [],
   announcements: [],
   paymentMethods: [],
+  promoCodes: [],
   reviews: [],
   wishlist: JSON.parse(localStorage.getItem('wishlist') || '[]'),
   siteName: 'KeyMaster',
   siteLogo: '',
+  welcomeGiftEnabled: false,
+  welcomeGiftDiscount: 10,
   isInitialized: false,
 
   setUser: (user) => set({ user }),
@@ -195,7 +210,8 @@ export const useStore = create<AppState>((set, get) => ({
                 id: firebaseUser.uid, 
                 name: userData?.name || firebaseUser.email?.split('@')[0] || 'User', 
                 email: firebaseUser.email || '', 
-                role: userData?.role || 'user'
+                role: userData?.role || 'user',
+                usedPromoCodes: userData?.usedPromoCodes || []
               } 
             });
           }
@@ -228,6 +244,12 @@ export const useStore = create<AppState>((set, get) => ({
       const paymentMethods = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PaymentMethod));
       set({ paymentMethods });
     });
+    
+    // Listen to PromoCodes
+    onSnapshot(collection(db, 'promoCodes'), (snapshot) => {
+      const promoCodes = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PromoCode));
+      set({ promoCodes });
+    });
 
     // Listen to Orders
     onSnapshot(query(collection(db, 'orders'), orderBy('date', 'desc')), (snapshot) => {
@@ -248,7 +270,9 @@ export const useStore = create<AppState>((set, get) => ({
         set({ 
           siteName: data.siteName || 'KeyMaster', 
           siteLogo: data.siteLogo || '', 
-          whatsappNumber: data.whatsappNumber || '+1234567890' 
+          whatsappNumber: data.whatsappNumber || '+1234567890',
+          welcomeGiftEnabled: !!data.welcomeGiftEnabled,
+          welcomeGiftDiscount: data.welcomeGiftDiscount || 10
         });
       }
     });
@@ -298,17 +322,33 @@ export const useStore = create<AppState>((set, get) => ({
     await signOut(auth);
   },
   
-  placeOrder: async (method) => {
-    const { cart, user } = get();
+  placeOrder: async (method, promoId) => {
+    const { cart, user, promoCodes, applyPromoCode } = get();
     if (!user || cart.length === 0) return;
 
-    const total = cart.reduce((sum, item) => {
+    let subtotal = 0;
+    let total = 0;
+
+    const promo = promoId ? promoCodes.find(p => p.id === promoId) : null;
+
+    cart.forEach(item => {
       const basePrice = item.selectedDuration ? item.selectedDuration.price : item.product.price;
-      const finalPrice = item.product.discountPercentage 
+      const nativeDiscounted = item.product.discountPercentage 
         ? basePrice * (1 - item.product.discountPercentage / 100)
         : basePrice;
-      return sum + (finalPrice * item.quantity);
-    }, 0);
+      
+      subtotal += nativeDiscounted * item.quantity;
+
+      let finalPrice = nativeDiscounted;
+      if (promo && (!promo.targetProductId || promo.targetProductId === item.product.id)) {
+        if (promo.discountType === 'percentage') {
+          finalPrice = finalPrice * (1 - promo.discountValue / 100);
+        } else {
+          finalPrice = Math.max(0, finalPrice - promo.discountValue);
+        }
+      }
+      total += finalPrice * item.quantity;
+    });
     
     const keys = method === 'Auto' ? cart.map(item => ({
       productId: item.product.id,
@@ -321,6 +361,7 @@ export const useStore = create<AppState>((set, get) => ({
       date: new Date().toISOString(),
       userId: user.id,
       userEmail: user.email,
+      promoId: promoId || null,
       items: cart.map(item => ({
         product: {
           id: item.product.id,
@@ -333,12 +374,37 @@ export const useStore = create<AppState>((set, get) => ({
         selectedDuration: item.selectedDuration || null
       })),
       total,
+      subtotal,
       status: method === 'WhatsApp' ? 'Pending' : 'Completed',
       method,
       keys
     };
 
     await addDoc(collection(db, 'orders'), newOrder);
+    
+    // Increment usage count of promo code if used
+    if (promoId) {
+      if (user) {
+        const userRef = doc(db, 'users', user.id);
+        const updatedUsedPromos = [...(user.usedPromoCodes || []), promoId];
+        await updateDoc(userRef, { usedPromoCodes: updatedUsedPromos });
+        
+        // If it's a dynamic gift code, also track it in a global collection
+        if (promoId.startsWith('GIFT-')) {
+          await setDoc(doc(db, 'globalUsedPromos', promoId), {
+            usedBy: user.id,
+            usedAt: serverTimestamp()
+          });
+        }
+      }
+
+      const promoRef = doc(db, 'promoCodes', promoId);
+      const currentPromo = promoCodes.find(p => p.id === promoId);
+      if (currentPromo) {
+        await updateDoc(promoRef, { usageCount: (currentPromo.usageCount || 0) + 1 });
+      }
+    }
+
     set({ cart: [] });
   },
 
@@ -422,5 +488,62 @@ export const useStore = create<AppState>((set, get) => ({
   
   deleteReview: async (id) => {
     await deleteDoc(doc(db, 'reviews', id));
+  },
+
+  addPromoCode: async (promo) => {
+    const { ...data } = promo;
+    await addDoc(collection(db, 'promoCodes'), { ...data, usageCount: 0 });
+  },
+
+  updatePromoCode: async (id, data) => {
+    await updateDoc(doc(db, 'promoCodes', id), data);
+  },
+
+  deletePromoCode: async (id) => {
+    await deleteDoc(doc(db, 'promoCodes', id));
+  },
+
+  applyPromoCode: async (code: string) => {
+    const { promoCodes, welcomeGiftEnabled, welcomeGiftDiscount, user } = get();
+    
+    // Regular check
+    const promo = promoCodes.find(p => p.code === code && p.isActive);
+    
+    // Check if user already used this promo (local check)
+    if (user?.usedPromoCodes?.includes(promo?.id || '')) return null;
+    if (user?.usedPromoCodes?.includes(code)) return null; // for dynamic codes
+
+    // Global check for dynamic codes
+    if (code.startsWith('GIFT-')) {
+      try {
+        const globalRef = doc(db, 'globalUsedPromos', code);
+        const globalSnap = await getDoc(globalRef);
+        if (globalSnap.exists()) return null;
+      } catch (err) {
+        console.error('Error checking global promos:', err);
+      }
+    }
+
+    if (promo) return promo;
+
+    // Dynamic Gift Code check (Pattern: GIFT-[DISCOUNT]-[RANDOM])
+    if (welcomeGiftEnabled && code.startsWith('GIFT-')) {
+      const parts = code.split('-');
+      if (parts.length >= 2) {
+        const discountVal = parseInt(parts[1]);
+        if (discountVal === welcomeGiftDiscount) {
+          return {
+            id: code,
+            code: code,
+            discountType: 'percentage',
+            discountValue: welcomeGiftDiscount,
+            isActive: true,
+            usageCount: 0
+          } as PromoCode;
+        }
+      }
+    }
+
+    return null;
   }
 }))

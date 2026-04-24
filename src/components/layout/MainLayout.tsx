@@ -112,13 +112,22 @@ export default function MainLayout() {
               <div className="hidden sm:block h-6 w-px bg-slate-200 mx-1"></div>
 
               {user ? (
-                <Link 
-                  to={user.role === 'admin' ? "/admin" : "/dashboard"} 
-                  className="hidden sm:flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 transition-colors py-2 px-3 rounded-xl hover:bg-indigo-50"
-                >
-                  <UserCircle className="w-5 h-5 text-indigo-600" />
-                  <span>{user.name}</span>
-                </Link>
+                <div className="hidden sm:flex items-center gap-2">
+                  <Link 
+                    to={user.role === 'admin' ? "/admin" : "/dashboard"} 
+                    className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 transition-colors py-2 px-3 rounded-xl hover:bg-indigo-50"
+                  >
+                    <UserCircle className="w-5 h-5 text-indigo-600" />
+                    <span>{user.name}</span>
+                  </Link>
+                  <button 
+                    onClick={() => logout()}
+                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                    title={t('nav.signOut')}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-3">
                   <Link to="/login" className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">

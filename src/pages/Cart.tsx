@@ -1,5 +1,6 @@
-import { useStore } from '../store/useStore';
-import { ShoppingCart, Trash2, ArrowRight, CreditCard, MessageCircle, ShieldCheck } from 'lucide-react';
+import { useStore, CartItem } from '../store/useStore';
+import { ShoppingCart, Trash2, ArrowRight, CreditCard, MessageCircle, ShieldCheck, Gift, CheckCircle } from 'lucide-react';
+import { PromoCode } from '../data/mockData';
 import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
@@ -9,14 +10,64 @@ export default function Cart() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const { applyPromoCode, promoCodes } = useStore();
+  const [promoInput, setPromoInput] = useState('');
+  const [activePromo, setActivePromo] = useState<PromoCode | null>(null);
+  const [promoError, setPromoError] = useState('');
 
-  const total = cart.reduce((sum, item) => {
+  const handleApplyPromo = async () => {
+    setPromoError('');
+    
+    // Preliminary local check
+    const promo = promoCodes.find(p => p.code === promoInput && p.isActive);
+    if (user?.usedPromoCodes?.includes(promo?.id || '') || user?.usedPromoCodes?.includes(promoInput)) {
+       setPromoError('You have already used this coupon');
+       return;
+    }
+
+    const code = await applyPromoCode(promoInput);
+    if (!code) {
+      // Check if it's because it was used globally or just invalid
+      setPromoError('Invalid code or already used');
+      setActivePromo(null);
+      return;
+    }
+    setActivePromo(code);
+  };
+
+  const getDiscountedPrice = (item: CartItem) => {
     const basePrice = item.selectedDuration ? item.selectedDuration.price : item.product.price;
-    const finalPrice = item.product.discountPercentage 
+    let finalPrice = item.product.discountPercentage 
       ? basePrice * (1 - item.product.discountPercentage / 100)
       : basePrice;
-    return sum + (finalPrice * item.quantity);
+    
+    if (activePromo) {
+      // Check if it's a global code or specific to this product
+      if (!activePromo.targetProductId || activePromo.targetProductId === item.product.id) {
+        if (activePromo.discountType === 'percentage') {
+          finalPrice = finalPrice * (1 - activePromo.discountValue / 100);
+        } else {
+          finalPrice = Math.max(0, finalPrice - activePromo.discountValue);
+        }
+      }
+    }
+    return finalPrice;
+  };
+
+  const subtotal = cart.reduce((sum, item) => {
+    const basePrice = item.selectedDuration ? item.selectedDuration.price : item.product.price;
+    const priceWithNativeDiscount = item.product.discountPercentage 
+      ? basePrice * (1 - item.product.discountPercentage / 100)
+      : basePrice;
+    return sum + (priceWithNativeDiscount * item.quantity);
   }, 0);
+
+  const total = cart.reduce((sum, item) => {
+    return sum + (getDiscountedPrice(item) * item.quantity);
+  }, 0);
+
+  const promoDiscount = subtotal - total;
+
   const activeMethods = paymentMethods.filter(m => m.isActive);
 
   const handleCheckout = async (method: 'Auto' | 'WhatsApp') => {
@@ -25,7 +76,7 @@ export default function Cart() {
        return;
     }
 
-    await placeOrder(method);
+    await placeOrder(method, activePromo?.id);
     
     if (method === 'WhatsApp') {
        const selectedMethod = paymentMethods.find(m => m.id === selectedPaymentId);
@@ -110,12 +161,53 @@ export default function Cart() {
             <div className="space-y-4 mb-6 text-slate-600 border-b border-slate-200 pb-6">
               <div className="flex justify-between">
                 <span>{t('cart.subtotal')} ({cart.length} {t('common.items')})</span>
-                <span className="font-semibold text-slate-900">{(total || 0).toLocaleString()} {t('common.currency')}</span>
+                <span className="font-semibold text-slate-900">{(subtotal || 0).toLocaleString()} {t('common.currency')}</span>
               </div>
+              {promoDiscount > 0 && (
+                <div className="flex justify-between items-center bg-indigo-50/50 p-2 rounded-lg -mx-2">
+                  <div className="flex items-center gap-1.5 text-indigo-600 font-bold text-xs uppercase">
+                    <Gift className="w-3.5 h-3.5" />
+                    Promo Applied
+                  </div>
+                  <span className="font-black text-indigo-600">
+                    -{(promoDiscount || 0).toLocaleString()} {t('common.currency')}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span>{t('cart.tax')}</span>
                 <span className="font-semibold text-emerald-600">Free</span>
               </div>
+            </div>
+
+            {/* Promo Code Input */}
+            <div className="mb-8">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <Gift className="w-3 h-3" />
+                Invitation / Promo Code
+              </p>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={promoInput}
+                  onChange={e => setPromoInput(e.target.value.toUpperCase())}
+                  placeholder="CODE"
+                  className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm font-black uppercase outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner"
+                />
+                <button 
+                  onClick={handleApplyPromo}
+                  className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md active:scale-95 transition-transform"
+                >
+                  Apply
+                </button>
+              </div>
+              {promoError && <p className="text-[10px] text-red-500 font-bold mt-1 ml-1">{promoError}</p>}
+              {activePromo && !promoError && (
+                <p className="text-[10px] text-emerald-600 font-bold mt-1 ml-1 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  Code {activePromo.code} applied successfully!
+                </p>
+              )}
             </div>
 
             <div className="flex justify-between items-end mb-8">

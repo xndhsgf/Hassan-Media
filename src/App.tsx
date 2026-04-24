@@ -14,9 +14,11 @@ import AdminBanners from './pages/admin/AdminBanners';
 import AdminPaymentMethods from './pages/admin/AdminPaymentMethods';
 import AdminAnnouncements from './pages/admin/AdminAnnouncements';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminPromotions from './pages/admin/AdminPromotions';
 import Login from './pages/Login';
 import { useEffect } from 'react';
 import { useStore } from './store/useStore';
+import WelcomeOverlay from './components/WelcomeOverlay';
 
 export default function App() {
   const { initFirebase } = useStore();
@@ -28,6 +30,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <WelcomeOverlay />
       <Routes>
         {/* User Facing Routes */}
         <Route path="/" element={<MainLayout />}>
@@ -51,6 +54,7 @@ export default function App() {
           <Route path="payment-methods" element={<AdminPaymentMethods />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="settings" element={<AdminSettings />} />
+          <Route path="promos" element={<AdminPromotions />} />
           <Route path="*" element={<div className="p-8"><h2 className="text-xl font-bold">Coming Soon</h2><p className="text-slate-500 mt-2">This section of the admin panel is under construction.</p></div>} />
         </Route>
         
